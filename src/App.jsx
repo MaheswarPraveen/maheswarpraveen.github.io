@@ -118,38 +118,36 @@ export default function App() {
         onUpdate: (self) => {
           const p = self.progress;
 
-          // If auto-swallow is already active/completed and user hasn't scrolled back, let it play
-          if (p >= 0.50) {
-            // AT THIS EXACT MOMENT: All letters have become binary 0s!
-            // Start automated swallowing into the black hole!
+          // ------------------------------------------------------------------
+          // THE EXACT MOMENT: All letters have become zeroes at p >= 0.40!
+          // Launch automated swallowing immediately into the black hole!
+          // ------------------------------------------------------------------
+          if (p >= 0.40) {
             if (autoSwallowTl.progress() === 0 && !autoSwallowTl.isActive()) {
               autoSwallowTl.play();
             }
             return;
           }
 
-          // "only come back if scrolled back enough" (p < 0.35)
-          if (p < 0.35 && (autoSwallowTl.progress() > 0 || autoSwallowTl.isActive())) {
+          // Reverse only if scrolled back enough (p < 0.28)
+          if (p < 0.28 && (autoSwallowTl.progress() > 0 || autoSwallowTl.isActive())) {
             autoSwallowTl.reverse();
             return;
           }
 
-          // If auto-swallow is running in reverse, let it finish reversing before updating scrub
           if (autoSwallowTl.isActive()) return;
 
-          // SCROLL-DRIVEN BINARY SCRAMBLE (p from 0.0 to 0.50):
-          // Phase 0 (0.0 to 0.15): Solid clean English reading
-          // Phase 1 (0.15 to 0.50): Progressive scramble into binary 0s
-          const scrambleProgress = Math.max(0, (p - 0.15) / 0.35); // 0.0 to 1.0
+          // SCROLL-DRIVEN BINARY SCRAMBLE (p from 0.10 to 0.40):
+          // Phase 0 (p < 0.10): Crisp readable English
+          // Phase 1 (p from 0.10 to 0.40): Progressive cascade into golden 0s
+          const scrambleProgress = Math.max(0, Math.min(1.0, (p - 0.10) / 0.30));
 
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            // Cascades line by line down the card
-            const charStart = (idx / totalChars) * 0.65;
-            const scrambleDur = 0.25;
+            const charStart = (idx / totalChars) * 0.60;
+            const scrambleDur = 0.20;
 
             if (scrambleProgress < charStart) {
-              // Intact original text
               if (c._swallowState !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
@@ -159,7 +157,6 @@ export default function App() {
                 c._swallowState = 0;
               }
             } else if (scrambleProgress < charStart + scrambleDur) {
-              // Flickering golden binary 0s and 1s
               c.textContent = Math.random() > 0.5 ? '1' : '0';
               c.style.color = '#ffb030';
               c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.5)';
@@ -167,7 +164,6 @@ export default function App() {
               c.style.transform = '';
               c._swallowState = 1;
             } else {
-              // Locked solid golden '0'
               if (c._swallowState !== 2) {
                 c.textContent = '0';
                 c.style.color = '#ffa020';

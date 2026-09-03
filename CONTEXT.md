@@ -1,12 +1,12 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 04:00:55
+**Last Synced:** 2026-09-04 04:07:27
 
 ## Current Focus & Active State
 
 - Directive: are you dumb , i said after everyletter is binary at that moment automated swallowing should start and only come back if scrolled back enough? why are you not even reading propely and now black hole isnt rotating at all wheres ripple. and again you took bakc the interactive interupption of black hole while scrolling. removed independance. why are we even moving forward in time if you are taking back each bug we had one by one? disapointed.
 - Rationale: User's exact intent clarified: (1) Scroll controls letter-to-binary transformation line-by-line; at the exact moment all letters become binary, automated swallowing launches autonomously into the black hole without getting stuck. It only reverses if scrolled back enough. (2) Restoring true visible, fluid Keplerian rotation (speeds = 0.22/sqrt(r), baseSpeed 1.0, dt*60) and exact spiral ripple wave sin(2.2t + 2.5theta + 1.6r)*0.22 from commit 7e1c8775. (3) Restoring interactive hover interruption during scrolling with organic recovery.
-- Updated `CONTEXT.md` (+3/-26 lines).
+- Applied workspace modifications (+0/-13 lines).
 
 ## Recent Context Stream
 
