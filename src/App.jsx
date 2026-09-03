@@ -14,9 +14,6 @@ export default function App() {
     const container = containerRef.current;
     if (!container) return;
 
-    // ------------------------------------------------------------------------
-    // SETUP SPLITTYPE ON EACH CARD
-    // ------------------------------------------------------------------------
     const cards = Array.from(container.querySelectorAll('.card'));
     const splits = [];
 
@@ -51,22 +48,22 @@ export default function App() {
       measureCharPositions();
 
       // ----------------------------------------------------------------------
-      // PINNED SLIDE SCROLLTRIGGER: Immediate Center Pinning (Zero Dead Gap)
+      // PINNED SLIDE SCROLLTRIGGER: Generous, Controlled Runway (+=110%)
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
         start: isHero ? "top top" : "center center",
-        end: isHero ? "+=55%" : "+=60%", // Snappy, effortless progression
+        end: isHero ? "+=95%" : "+=110%", // Generous runway: smooth, deliberate pacing!
         pin: true,
         pinSpacing: true,
-        scrub: 0.9,
+        scrub: 1.2, // Smooth scrub damping
         onEnter: () => measureCharPositions(),
         onEnterBack: () => measureCharPositions(),
         onUpdate: (self) => {
           const p = self.progress;
 
-          // 1. GENEROUS READING DWELL TIME (0.0 to 0.35): Solid, centered, fully readable!
-          if (p <= 0.35) {
+          // 1. GENEROUS DWELL TIME (0.0 to 0.32): Solid, readable English
+          if (p <= 0.32) {
             chars.forEach((c) => {
               if (c._state !== 0) {
                 c.textContent = c.dataset.orig;
@@ -91,14 +88,14 @@ export default function App() {
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
-          // 2. BINARY SCRAMBLE & 3D SWALLOW (0.35 to 1.00)
-          const animT = (p - 0.35) / 0.65; // 0.0 to 1.0
+          // 2. DELIBERATE, SMOOTH BINARY CASCADE (0.32 to 1.00)
+          const animT = (p - 0.32) / 0.68; // 0.0 to 1.0
 
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            const charStart = (idx / totalChars) * 0.28;
-            const scrambleDur = 0.18;
-            const holdZeroDur = 0.15;
+            const charStart = (idx / totalChars) * 0.32;
+            const scrambleDur = 0.24; // Stretched scramble duration: gradual, readable transformation!
+            const holdZeroDur = 0.18; // Stretched hold duration: clearly see the golden zeroes
 
             if (animT < charStart) {
               if (c._state !== 0) {
@@ -114,7 +111,7 @@ export default function App() {
 
             const localProgress = animT - charStart;
 
-            // Phase A: Scrambling into glowing 0s and 1s
+            // Phase A: Slowly, deliberately scrambling into golden 0s and 1s
             if (localProgress < scrambleDur) {
               if (c._state !== 1) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
@@ -125,7 +122,7 @@ export default function App() {
                 c._state = 1;
               }
             }
-            // Phase B: Locks into solid glowing golden '0'
+            // Phase B: Holds as solid glowing golden '0'
             else if (localProgress < scrambleDur + holdZeroDur) {
               if (c._state !== 2) {
                 c.textContent = '0';
@@ -136,43 +133,43 @@ export default function App() {
                 c._state = 2;
               }
             }
-            // Phase C: 3D Orbital Plunge into Black Hole
+            // Phase C: Graceful, slow 3D orbital curve into the Black Hole
             else {
               if (c._state !== 3) {
                 c.textContent = '0';
                 c._state = 3;
               }
 
-              const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.32);
-              const accel = Math.pow(swallowT, 2.2);
+              const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.28);
+              const accel = Math.pow(swallowT, 2.0);
 
               const origin = charOffsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
               const dx = bhScreen.x - origin.x;
               const dy = bhScreen.y - origin.y;
 
-              const swirlAngle = idx * 0.12 + accel * 3.5;
-              const swirlX = Math.sin(swirlAngle) * 25 * (1 - accel);
-              const swirlY = Math.cos(swirlAngle) * 18 * (1 - accel);
+              const swirlAngle = idx * 0.10 + accel * 3.2;
+              const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
+              const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
 
               const curX = dx * accel + swirlX;
               const curY = dy * accel + swirlY;
               const curZ = -accel * 550;
 
-              const scaleX = 1.0 + accel * 0.4;
-              const scaleY = Math.max(0.1, 1.0 - accel * 0.8);
-              const rotX = accel * 55;
-              const rotZ = -accel * 18;
-              const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.5));
+              const scaleX = 1.0 + accel * 0.35;
+              const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
+              const rotX = accel * 52;
+              const rotZ = -accel * 16;
+              const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.2));
 
               c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
               c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-              c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
+              c.style.textShadow = `0 0 ${Math.max(2, 10 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
               c.style.opacity = remainingOpacity.toFixed(2);
             }
           }
 
-          // Container & tags dissolve smoothly
-          const boxProgress = Math.max(0, (animT - 0.40) / 0.55);
+          // Container & tags dissolve gently
+          const boxProgress = Math.max(0, (animT - 0.45) / 0.50);
           const boxFade = Math.max(0, 1.0 - boxProgress * 1.3);
           card.style.opacity = boxFade.toFixed(2);
           boxes.forEach((b) => {
@@ -201,10 +198,8 @@ export default function App() {
       });
     });
 
-    // ------------------------------------------------------------------------
-    // TERMINAL WHITEOUT FLASH AT THE VERY END
-    // ------------------------------------------------------------------------
-    const endTrigger = ScrollTrigger.create({
+    // Terminal Whiteout Flash at the very end of scroll
+    ScrollTrigger.create({
       trigger: '.scroll-end-trigger',
       start: "top 70%",
       end: "bottom bottom",

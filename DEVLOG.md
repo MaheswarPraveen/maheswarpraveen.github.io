@@ -163,3 +163,9 @@ Automated continuity log maintained by offGIT.
 - Directive: WTF IS THIS, WTF YOURE MESSING UP IT MORE AGAIN AND AGAIN. FIRST THE WAVE FORM , NIW THIS , BREAKING EACH BY EACH. WHY DONT YOU TAKE A LOOK SCROLL FIND ISSUE AND FIX AT THIS POINT. IM DONE BRO
 - Rationale: The user showed a screenshot where absolute-stacked slides caused the Hero zeroes to float directly on top of Slide 1, and the wave form was flattened. Rolling back to the proven separate-card pinned architecture, restoring the authentic 3D particle wave math (spiralWave, 0.07 size, 0.34 speed), ensuring zero ghost overlapping zeroes, and testing with a multi-step scroll script to verify every slide visually.
 - Applied workspace modifications (+0/-10 lines).
+
+## 2026-09-04 03:19:17 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: THE FRCIKING SPEED OF BLACK HOLE IS TOO MUCH , THE WAY LETTER TURNS TOO 0 AND 1 IS TOO FUCKING FAST. LIKE DUE THE WAVE IS COMOPLETELY FUCKED UP FUCKED UP FUCKED UP. COME ON IVE BEEN HERE 24 HOURS
+- Rationale: Fixing 3 fundamental issues: 1) Slashed black hole rotation speed to a calm, majestic pace (baseSpeed: 0.9, speeds: 0.08 / sqrt(r)). 2) Fixed the wave form: boosted wave amplitude to 0.45 and stopped the camera from tilting to top-down flat camY: 17.5 which flattened the 3D waves. Keep camera at an oblique angle (camY: 3.5, camZ: 17) where 3D waves are always prominent. 3) Expanded pin runway to +=120% and stretched scramble duration so letters turn to 0s and 1s slowly, gracefully, and deliberately.
+- Updated `CONTEXT.md` (+3/-26 lines).
