@@ -51,15 +51,15 @@ export default function App() {
       measureCharPositions();
 
       // ----------------------------------------------------------------------
-      // PINNED SLIDE SCROLLTRIGGER: Generous Dwell -> Binary -> 3D Swallow
+      // PINNED SLIDE SCROLLTRIGGER: Immediate Center Pinning (Zero Dead Gap)
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "top top",
-        end: "+=75%", // Comfortable 75vh dwell and transition runway
+        start: isHero ? "top top" : "center center",
+        end: isHero ? "+=55%" : "+=60%", // Snappy, effortless progression
         pin: true,
         pinSpacing: true,
-        scrub: 1.0,
+        scrub: 0.9,
         onEnter: () => measureCharPositions(),
         onEnterBack: () => measureCharPositions(),
         onUpdate: (self) => {
