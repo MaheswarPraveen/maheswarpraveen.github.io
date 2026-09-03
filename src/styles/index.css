@@ -75,7 +75,7 @@ body {
   position: relative;
   width: 100%;
   min-height: auto;
-  margin-bottom: 85vh; /* Comfortable, natural arrival distance */
+  margin-bottom: 20vh; /* Smooth, natural arrival: only ~200px gap after swallow */
   display: flex;
   flex-direction: column;
   justify-content: center;

@@ -193,3 +193,9 @@ Automated continuity log maintained by offGIT.
 - Directive: yes , please check after with your screenview if any error or imperfections after and fix that too
 - Rationale: User approved the autonomous auto-swallow animation (with scroll-back reversal), middle-left vertical 50% alignment, and slowed black hole rotation (baseSpeed 0.75, 0.08/sqrt(r)). Executing the code changes, running headless visual verification at multiple scroll positions to inspect for any imperfections, and verifying.
 - Applied workspace modifications (+0/-13 lines).
+
+## 2026-09-04 03:48:48 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: wtf wtf now you just brought back every fast glitch we had , dude were declining
+- Rationale: The autonomous 0.75s timer triggered an abrupt, instant collapse of the slide that felt like a violent glitch. Furthermore, black hole math was multiplying by 60 in dt loop, causing it to spin at 3.6 rad/s (once every 1.7s) like a buzzsaw! Fix: Remove the 0.75s autonomous timer. Restore smooth GSAP scrub (1.2s damping) across a generous 130% runway so the transformation is slow, silky, and controllable. Fix black hole speed to true majestic 0.15 rad/s (remove the * 60 multiplier). Ensure middle-left 50% alignment remains locked.
+- Updated `CONTEXT.md` (+3/-18 lines).
