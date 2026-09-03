@@ -16,6 +16,7 @@ export default function App() {
 
     const cards = Array.from(container.querySelectorAll('.card'));
     const splits = [];
+    const allChars = [];
 
     cards.forEach((card, cIdx) => {
       const isHero = cIdx === 0;
@@ -32,19 +33,13 @@ export default function App() {
       const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .clean-link, .stack-col'));
       const totalChars = chars.length;
 
-      chars.forEach((c) => {
+      // 1. Measure origins ONCE, right now, before any animations or scrolling happen
+      const offsets = chars.map((c) => {
         c.dataset.orig = c.textContent;
         c._swallowState = 0;
+        const rect = c.getBoundingClientRect();
+        return { x: rect.left, y: rect.top };
       });
-
-      let offsets = [];
-      function measureCharPositions() {
-        offsets = chars.map((c) => {
-          const rect = c.getBoundingClientRect();
-          return { x: rect.left, y: rect.top };
-        });
-      }
-      measureCharPositions();
 
       // ----------------------------------------------------------------------
       // AUTONOMOUS 3D SWALLOW TIMELINE (Plays automatically once all chars are 0)
@@ -54,7 +49,7 @@ export default function App() {
 
       autoSwallowTl.to(swallowAnim, {
         flight: 1.0,
-        duration: 0.70,
+        duration: 0.85, // Slightly longer, more graceful flight
         ease: "power2.inOut",
         onUpdate: () => {
           const flightT = swallowAnim.flight;
@@ -64,12 +59,12 @@ export default function App() {
 
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            // Staggered flight trajectory into the singularity
-            const charFlightStart = (idx / totalChars) * 0.35;
-            const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.65));
+            // Stagger flight trajectory into the singularity
+            const charFlightStart = (idx / totalChars) * 0.25;
+            const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.75));
             const accel = Math.pow(progressInFlight, 2.0);
 
-            const origin = offsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
+            const origin = offsets[idx];
             const dx = bhScreen.x - origin.x;
             const dy = bhScreen.y - origin.y;
 
@@ -94,7 +89,6 @@ export default function App() {
             c.style.opacity = remainingOpacity.toFixed(2);
           }
 
-          // Card boxes dissolve smoothly during swallow
           const boxFade = Math.max(0, 1.0 - flightT * 1.6);
           boxes.forEach((b) => {
             b.style.opacity = boxFade.toFixed(2);
@@ -108,74 +102,73 @@ export default function App() {
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "center center", // Anchors dead-center in middle-left (50vh)
-        end: "+=120%",          // Comfortable runway
+        start: "center center",
+        // Extended runway so wheel scrolling is slower and more deliberate
+        end: "+=220%",
         pin: true,
         pinSpacing: true,
-        scrub: 1.0,             // Smooth wheel-controlled scramble
-        onEnter: () => measureCharPositions(),
-        onEnterBack: () => measureCharPositions(),
+        scrub: 1.0,
         onUpdate: (self) => {
           const p = self.progress;
 
           // ------------------------------------------------------------------
-          // THE EXACT MOMENT: All letters have become zeroes at p >= 0.40!
+          // Threshold 0.50: THE EXACT MOMENT all letters have become solid zeroes.
           // Launch automated swallowing immediately into the black hole!
           // ------------------------------------------------------------------
-          if (p >= 0.40) {
+          if (p >= 0.50) {
             if (autoSwallowTl.progress() === 0 && !autoSwallowTl.isActive()) {
               autoSwallowTl.play();
             }
             return;
           }
 
-          // Reverse only if scrolled back enough (p < 0.28)
-          if (p < 0.28 && (autoSwallowTl.progress() > 0 || autoSwallowTl.isActive())) {
+          // Reverse only if scrolled back enough (p < 0.35)
+          if (p < 0.35 && (autoSwallowTl.progress() > 0 || autoSwallowTl.isActive())) {
             autoSwallowTl.reverse();
             return;
           }
 
           if (autoSwallowTl.isActive()) return;
 
-          // SCROLL-DRIVEN BINARY SCRAMBLE (p from 0.10 to 0.40):
-          // Phase 0 (p < 0.10): Crisp readable English
-          // Phase 1 (p from 0.10 to 0.40): Progressive cascade into golden 0s
-          const scrambleProgress = Math.max(0, Math.min(1.0, (p - 0.10) / 0.30));
+          // SCROLL-DRIVEN BINARY SCRAMBLE (p from 0.0 to 0.50):
+          // Phase 0 (p < 0.15): Crisp readable English
+          // Phase 1 (p from 0.15 to 0.35): Synchronous scramble into 0s and 1s (NO "0aheswar")
+          // Phase 2 (p from 0.35 to 0.50): Solid golden zeroes
+          const scrambleProgress = Math.max(0, Math.min(1.0, (p - 0.15) / 0.35));
 
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            const charStart = (idx / totalChars) * 0.60;
-            const scrambleDur = 0.20;
 
-            if (scrambleProgress < charStart) {
+            if (scrambleProgress === 0) {
               if (c._swallowState !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
                 c.style.opacity = '1';
-                c.style.transform = '';
-                c.style.textShadow = '';
+                c.style.transform = 'none';
+                c.style.textShadow = 'none';
                 c._swallowState = 0;
               }
-            } else if (scrambleProgress < charStart + scrambleDur) {
+            } else if (scrambleProgress > 0 && scrambleProgress < 0.85) {
+              // ALL letters scramble simultaneously (prevents partial word reading)
               c.textContent = Math.random() > 0.5 ? '1' : '0';
               c.style.color = '#ffb030';
               c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.5)';
               c.style.opacity = '1';
-              c.style.transform = '';
+              c.style.transform = 'none';
               c._swallowState = 1;
             } else {
+              // ALL letters lock into solid 0 simultaneously
               if (c._swallowState !== 2) {
                 c.textContent = '0';
                 c.style.color = '#ffa020';
                 c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.6)';
                 c.style.opacity = '1';
-                c.style.transform = '';
+                c.style.transform = 'none';
                 c._swallowState = 2;
               }
             }
           }
 
-          // Card boxes remain solid until scramble completes
           boxes.forEach((b) => {
             b.style.opacity = '1';
           });
@@ -191,8 +184,8 @@ export default function App() {
             c.textContent = c.dataset.orig;
             c.style.color = '';
             c.style.opacity = '1';
-            c.style.transform = '';
-            c.style.textShadow = '';
+            c.style.transform = 'none';
+            c.style.textShadow = 'none';
             c._swallowState = 0;
           });
           card.style.opacity = '1';
@@ -230,15 +223,9 @@ export default function App() {
 
   return (
     <>
-      {/* Terminal Swallow Whiteout Flash Overlay */}
       <div id="flash-overlay" />
-
-      {/* 60+ FPS Three.js WebGL Black Hole Canvas */}
       <BlackHoleCanvas />
-
-      {/* UI Container with Middle-Left Pinned Slides */}
       <main id="ui-container" ref={containerRef}>
-        {/* Slide 0: Hero */}
         <header className="card hero-card">
           <h1 className="name-title">
             <span className="name-line">{personalInfo.firstName}</span>
@@ -251,7 +238,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Slides 1-7: Project Dossiers */}
         {projects.map((proj) => (
           <section className="card content-card" key={proj.id}>
             <span className="project-index">{proj.id} // {proj.category}</span>
@@ -265,7 +251,6 @@ export default function App() {
           </section>
         ))}
 
-        {/* Slide 8: Technical Capabilities */}
         <section className="card content-card">
           <span className="project-index">07 // STACK</span>
           <h2 className="section-title">Technical Capabilities</h2>
@@ -279,8 +264,6 @@ export default function App() {
           </div>
         </section>
       </main>
-
-      {/* Terminal Runway */}
       <div className="scroll-end-trigger" />
     </>
   );
