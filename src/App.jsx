@@ -34,7 +34,7 @@ export default function App() {
 
       chars.forEach((c) => {
         c.dataset.orig = c.textContent;
-        c._state = 0; // 0: original, 1: scramble, 2: locked zero, 3: flight
+        c._swallowState = 0;
       });
 
       let offsets = [];
@@ -47,130 +47,167 @@ export default function App() {
       measureCharPositions();
 
       // ----------------------------------------------------------------------
-      // BUTTERY SMOOTH SCRUBBED GSAP PINNING (1.2s Silky Damping, Generous Runway)
+      // AUTONOMOUS 3D SWALLOW TIMELINE (Plays automatically once all chars are 0)
       // ----------------------------------------------------------------------
-      const cardTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: card,
-          start: "center center", // Locks dead-center at 50vh middle-left
-          end: "+=125%",          // Generous runway — NO RUSHING, NO FAST GLITCHES
-          pin: true,
-          pinSpacing: true,
-          scrub: 1.2,             // Silky smooth GSAP physics damping
-          onEnter: () => measureCharPositions(),
-          onEnterBack: () => measureCharPositions(),
-          onLeave: () => {
-            card.style.opacity = '0';
-          },
-          onLeaveBack: () => {
-            card.style.opacity = '1';
-          }
-        }
-      });
+      const swallowAnim = { flight: 0 };
+      const autoSwallowTl = gsap.timeline({ paused: true });
 
-      const animState = { progress: 0 };
-
-      cardTl.to(animState, {
-        progress: 1.0,
-        ease: "none",
+      autoSwallowTl.to(swallowAnim, {
+        flight: 1.0,
+        duration: 0.70,
+        ease: "power2.inOut",
         onUpdate: () => {
-          const p = animState.progress;
+          const flightT = swallowAnim.flight;
           const bhScreen = window.__getBHScreenCoord
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
-          // Reading plateau (0.0 to 0.30): completely solid, readable English
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            // Cascade transformation starts from 0.30 to 0.70 (word by word)
-            const charStart = 0.30 + (idx / totalChars) * 0.38;
-            const scrambleDur = 0.12;
-            const holdZeroDur = 0.04;
+            // Staggered flight trajectory into the singularity
+            const charFlightStart = (idx / totalChars) * 0.35;
+            const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.65));
+            const accel = Math.pow(progressInFlight, 2.0);
 
-            if (p < charStart) {
-              if (c._state !== 0) {
+            const origin = offsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
+            const dx = bhScreen.x - origin.x;
+            const dy = bhScreen.y - origin.y;
+
+            const swirlAngle = idx * 0.10 + accel * 3.2;
+            const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
+            const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
+
+            const curX = dx * accel + swirlX;
+            const curY = dy * accel + swirlY;
+            const curZ = -accel * 550;
+
+            const scaleX = 1.0 + accel * 0.35;
+            const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
+            const rotX = accel * 52;
+            const rotZ = -accel * 16;
+            const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.2));
+
+            c.textContent = '0';
+            c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
+            c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
+            c.style.textShadow = `0 0 ${Math.max(2, 10 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
+            c.style.opacity = remainingOpacity.toFixed(2);
+          }
+
+          // Card boxes dissolve smoothly during swallow
+          const boxFade = Math.max(0, 1.0 - flightT * 1.6);
+          boxes.forEach((b) => {
+            b.style.opacity = boxFade.toFixed(2);
+          });
+          card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.0)).toFixed(2);
+        }
+      });
+
+      // ----------------------------------------------------------------------
+      // SCROLLTRIGGER: Controlled Binary Scramble -> Auto Swallow Trigger
+      // ----------------------------------------------------------------------
+      ScrollTrigger.create({
+        trigger: card,
+        start: "center center", // Anchors dead-center in middle-left (50vh)
+        end: "+=120%",          // Comfortable runway
+        pin: true,
+        pinSpacing: true,
+        scrub: 1.0,             // Smooth wheel-controlled scramble
+        onEnter: () => measureCharPositions(),
+        onEnterBack: () => measureCharPositions(),
+        onUpdate: (self) => {
+          const p = self.progress;
+
+          // If auto-swallow is already active/completed and user hasn't scrolled back, let it play
+          if (p >= 0.50) {
+            // AT THIS EXACT MOMENT: All letters have become binary 0s!
+            // Start automated swallowing into the black hole!
+            if (autoSwallowTl.progress() === 0 && !autoSwallowTl.isActive()) {
+              autoSwallowTl.play();
+            }
+            return;
+          }
+
+          // "only come back if scrolled back enough" (p < 0.35)
+          if (p < 0.35 && (autoSwallowTl.progress() > 0 || autoSwallowTl.isActive())) {
+            autoSwallowTl.reverse();
+            return;
+          }
+
+          // If auto-swallow is running in reverse, let it finish reversing before updating scrub
+          if (autoSwallowTl.isActive()) return;
+
+          // SCROLL-DRIVEN BINARY SCRAMBLE (p from 0.0 to 0.50):
+          // Phase 0 (0.0 to 0.15): Solid clean English reading
+          // Phase 1 (0.15 to 0.50): Progressive scramble into binary 0s
+          const scrambleProgress = Math.max(0, (p - 0.15) / 0.35); // 0.0 to 1.0
+
+          for (let idx = 0; idx < totalChars; idx++) {
+            const c = chars[idx];
+            // Cascades line by line down the card
+            const charStart = (idx / totalChars) * 0.65;
+            const scrambleDur = 0.25;
+
+            if (scrambleProgress < charStart) {
+              // Intact original text
+              if (c._swallowState !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
                 c.style.opacity = '1';
                 c.style.transform = '';
                 c.style.textShadow = '';
-                c._state = 0;
+                c._swallowState = 0;
               }
-              continue;
-            }
-
-            const localProgress = p - charStart;
-
-            // Phase A: Gentle flicker into golden 0s and 1s
-            if (localProgress < scrambleDur) {
-              if (c._state !== 1) {
-                c.textContent = Math.random() > 0.5 ? '1' : '0';
-                c.style.color = '#ffb030';
-                c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.6)';
-                c.style.opacity = '1';
-                c.style.transform = '';
-                c._state = 1;
-              }
-            }
-            // Phase B: Momentary golden '0'
-            else if (localProgress < scrambleDur + holdZeroDur) {
-              if (c._state !== 2) {
+            } else if (scrambleProgress < charStart + scrambleDur) {
+              // Flickering golden binary 0s and 1s
+              c.textContent = Math.random() > 0.5 ? '1' : '0';
+              c.style.color = '#ffb030';
+              c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.5)';
+              c.style.opacity = '1';
+              c.style.transform = '';
+              c._swallowState = 1;
+            } else {
+              // Locked solid golden '0'
+              if (c._swallowState !== 2) {
                 c.textContent = '0';
                 c.style.color = '#ffa020';
-                c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.7)';
+                c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.6)';
                 c.style.opacity = '1';
                 c.style.transform = '';
-                c._state = 2;
+                c._swallowState = 2;
               }
-            }
-            // Phase C: Smooth 3D curve into Black Hole singularity
-            else {
-              if (c._state !== 3) {
-                c.textContent = '0';
-                c._state = 3;
-              }
-
-              const flightT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.20);
-              const accel = Math.pow(flightT, 2.0);
-
-              const origin = offsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
-              const dx = bhScreen.x - origin.x;
-              const dy = bhScreen.y - origin.y;
-
-              const swirlAngle = idx * 0.10 + accel * 3.2;
-              const swirlX = Math.sin(swirlAngle) * 20 * (1 - accel);
-              const swirlY = Math.cos(swirlAngle) * 15 * (1 - accel);
-
-              const curX = dx * accel + swirlX;
-              const curY = dy * accel + swirlY;
-              const curZ = -accel * 500;
-
-              const scaleX = 1.0 + accel * 0.35;
-              const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
-              const rotX = accel * 52;
-              const rotZ = -accel * 16;
-              const remainingOpacity = Math.max(0, 1.0 - Math.pow(flightT, 2.0));
-
-              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
-              c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-              c.style.textShadow = `0 0 ${Math.max(2, 10 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
-              c.style.opacity = remainingOpacity.toFixed(2);
             }
           }
 
-          // Card boxes dissolve smoothly
-          const boxFade = p < 0.40 ? 1.0 : Math.max(0, 1.0 - (p - 0.40) * 2.5);
+          // Card boxes remain solid until scramble completes
           boxes.forEach((b) => {
-            b.style.opacity = boxFade.toFixed(2);
+            b.style.opacity = '1';
           });
-
-          // Whole card smoothly fades out near the end of pin runway
-          card.style.opacity = p < 0.70 ? '1' : Math.max(0, 1.0 - (p - 0.70) * 3.3).toFixed(2);
+          card.style.opacity = '1';
+        },
+        onLeave: () => {
+          autoSwallowTl.progress(1);
+          card.style.opacity = '0';
+        },
+        onLeaveBack: () => {
+          autoSwallowTl.progress(0);
+          chars.forEach((c) => {
+            c.textContent = c.dataset.orig;
+            c.style.color = '';
+            c.style.opacity = '1';
+            c.style.transform = '';
+            c.style.textShadow = '';
+            c._swallowState = 0;
+          });
+          card.style.opacity = '1';
+          boxes.forEach((b) => {
+            b.style.opacity = '1';
+          });
         }
       });
     });
 
-    // Terminal Whiteout Flash at the very end of scroll runway
+    // Terminal Whiteout Flash at the very end of runway
     ScrollTrigger.create({
       trigger: '.scroll-end-trigger',
       start: "top 70%",

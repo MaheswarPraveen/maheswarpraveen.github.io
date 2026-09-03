@@ -205,3 +205,9 @@ Automated continuity log maintained by offGIT.
 - Directive: wtf wtf now you just brought back every fast glitch we had , dude were declining
 - Rationale: The autonomous 0.75s timer triggered an abrupt, instant collapse of the slide that felt like a violent glitch. Furthermore, black hole math was multiplying by 60 in dt loop, causing it to spin at 3.6 rad/s (once every 1.7s) like a buzzsaw! Fix: Remove the 0.75s autonomous timer. Restore smooth GSAP scrub (1.2s damping) across a generous 130% runway so the transformation is slow, silky, and controllable. Fix black hole speed to true majestic 0.15 rad/s (remove the * 60 multiplier). Ensure middle-left 50% alignment remains locked.
 - Applied workspace modifications (+0/-13 lines).
+
+## 2026-09-04 04:00:55 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: are you dumb , i said after everyletter is binary at that moment automated swallowing should start and only come back if scrolled back enough? why are you not even reading propely and now black hole isnt rotating at all wheres ripple. and again you took bakc the interactive interupption of black hole while scrolling. removed independance. why are we even moving forward in time if you are taking back each bug we had one by one? disapointed.
+- Rationale: User's exact intent clarified: (1) Scroll controls letter-to-binary transformation line-by-line; at the exact moment all letters become binary, automated swallowing launches autonomously into the black hole without getting stuck. It only reverses if scrolled back enough. (2) Restoring true visible, fluid Keplerian rotation (speeds = 0.22/sqrt(r), baseSpeed 1.0, dt*60) and exact spiral ripple wave sin(2.2t + 2.5theta + 1.6r)*0.22 from commit 7e1c8775. (3) Restoring interactive hover interruption during scrolling with organic recovery.
+- Updated `CONTEXT.md` (+3/-26 lines).

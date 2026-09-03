@@ -13,7 +13,7 @@ export default function BlackHoleCanvas() {
     if (!canvas) return;
 
     // ------------------------------------------------------------------------
-    // 1. PROCEDURAL GLOWING SPHERE TEXTURE
+    // 1. PROCEDURAL GLOWING SPHERE TEXTURE (ZERO SQUARE PARTICLES)
     // ------------------------------------------------------------------------
     function createSphereTexture() {
       const texCanvas = document.createElement('canvas');
@@ -90,7 +90,7 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 PARTICLES (TRULY SLOW, MAJESTIC, SILK SMOOTH)
+    // 4. ACCRETION DISK: 24,000 PARTICLES (FLUID ROTATION & ORIGINAL RIPPLE)
     // ------------------------------------------------------------------------
     const particleCount = 24000;
     const geometry = new THREE.BufferGeometry();
@@ -112,8 +112,8 @@ export default function BlackHoleCanvas() {
       radii[i] = r;
       angles[i] = a;
 
-      // Truly majestic, slow Keplerian orbit: ~0.15 to 0.22 rad/sec (~30-40s per rev)
-      speeds[i] = (0.05 + 0.12 / Math.sqrt(r)) * 0.45;
+      // Restored fluid, continuous Keplerian speed
+      speeds[i] = 0.22 / Math.sqrt(r);
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.3);
@@ -170,7 +170,7 @@ export default function BlackHoleCanvas() {
     scene.add(ambientParticles);
 
     // ------------------------------------------------------------------------
-    // 6. ENGINE STATE: GENTLE CRUISING SPEED
+    // 6. ENGINE STATE & INTERACTION ARCHITECTURE (INDEPENDENT ROTATION & HOVER)
     // ------------------------------------------------------------------------
     const es = { camZ: 20, camY: 3.2, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 1.0 };
 
@@ -192,11 +192,16 @@ export default function BlackHoleCanvas() {
       isMousePresent = true;
     };
     const onMouseLeave = () => { isMousePresent = false; };
+
+    // Interactive interruption on scroll: gives pure independent rotation during scroll, recovers organically on pause
     const onScroll = () => {
       isScrolling = true;
       if (scrollStopTimer) clearTimeout(scrollStopTimer);
-      scrollStopTimer = setTimeout(() => { isScrolling = false; }, 120);
+      scrollStopTimer = setTimeout(() => {
+        isScrolling = false;
+      }, 120);
     };
+
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -209,7 +214,7 @@ export default function BlackHoleCanvas() {
     window.addEventListener('resize', onResize);
 
     // ------------------------------------------------------------------------
-    // 7. RENDER LOOP: SILK SMOOTH DRIFT & ORIGINAL SINUSOIDAL RIPPLE
+    // 7. RENDER LOOP: ORIGINAL RIPPLE WAVE & FLUID ROTATION
     // ------------------------------------------------------------------------
     const clock = new THREE.Clock();
     let animId;
@@ -219,6 +224,7 @@ export default function BlackHoleCanvas() {
       const dt = Math.min(clock.getDelta(), 0.05);
       const t = clock.getElapsedTime();
 
+      // Decoupled smooth mouse parallax
       const parallaxSpeed = isScrolling ? 3.0 : 5.0;
       mouseSmooth.x += (mouseNDC.x - mouseSmooth.x) * (1.0 - Math.exp(-parallaxSpeed * dt));
       mouseSmooth.y += (mouseNDC.y - mouseSmooth.y) * (1.0 - Math.exp(-parallaxSpeed * dt));
@@ -231,8 +237,9 @@ export default function BlackHoleCanvas() {
       camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-5.0 * dt));
       camera.lookAt(es.lookX, es.lookY, es.lookZ);
 
+      // Smooth hover envelope: decays during scroll, recovers organically on pause
       const targetHover = (isMousePresent && !isScrolling) ? 1.0 : 0.0;
-      hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-6.0 * dt));
+      hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-8.0 * dt));
 
       if (isMousePresent && hoverStrength > 0.01) {
         raycaster.setFromCamera(mouseSmooth, camera);
@@ -252,15 +259,15 @@ export default function BlackHoleCanvas() {
 
       for (let i = 0; i < particleCount; i++) {
         const r = radii[i];
-        // Truly slow, silky Keplerian drift (NO arbitrary * 60 multiplier!)
-        angles[i] -= speeds[i] * dt * spd;
+        // Steady, fluid Keplerian rotation with 60 FPS reference multiplier
+        angles[i] -= speeds[i] * dt * spd * 60;
 
         const bx = anchorX + Math.cos(angles[i]) * r;
         const bz = Math.sin(angles[i]) * r;
 
         let rx = 0, rz = 0, ry = 0;
 
-        // Interactive ripple on mouse hover
+        // Interactive ripple on mouse hover (recovers when not scrolling)
         if (checkRepel && Math.abs(r - targetR) < REPEL_RADIUS) {
           const dx = bx - rawPlaneTarget.x;
           const dz = bz - rawPlaneTarget.z;
@@ -272,12 +279,12 @@ export default function BlackHoleCanvas() {
             const force = Math.cos(norm * Math.PI * 0.5) * 0.35 * hoverStrength;
             rx = (dx / d) * force;
             rz = (dz / d) * force;
-            ry = (1.0 - norm) * 0.28 * Math.sin(t * 3.5) * hoverStrength;
+            ry = (1.0 - norm) * 0.24 * Math.sin(t * 5.0) * hoverStrength;
           }
         }
 
-        // ORIGINAL RIPPLE WAVE: Gentle, slow sinusoidal spiral ripple winding outward
-        const spiralWave = Math.sin(t * 1.3 + angles[i] * 2.2 + r * 1.5) * 0.20;
+        // ORIGINAL RIPPLE WAVE: Exact sinusoidal spiral ripple from baseline (7e1c8775)
+        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.22;
 
         p[i * 3]     = bx + rx;
         p[i * 3 + 1] = spiralWave + ry;
@@ -309,9 +316,9 @@ export default function BlackHoleCanvas() {
       }
       ambientParticles.geometry.attributes.position.needsUpdate = true;
 
-      halo.scale.setScalar(1 + Math.sin(t * 1.5) * 0.012);
-      outerRing.scale.setScalar(1 + Math.cos(t * 1.2) * 0.012);
-      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.0) * 0.010);
+      halo.scale.setScalar(1 + Math.sin(t * 1.8) * 0.015);
+      outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
+      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
 
       renderer.render(scene, camera);
     }
