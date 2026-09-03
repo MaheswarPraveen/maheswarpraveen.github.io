@@ -90,7 +90,7 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 PARTICLES (DEEPLY CALM SPEED & ORIGINAL RIPPLE)
+    // 4. ACCRETION DISK: 24,000 PARTICLES (TRULY SLOW, MAJESTIC, SILK SMOOTH)
     // ------------------------------------------------------------------------
     const particleCount = 24000;
     const geometry = new THREE.BufferGeometry();
@@ -111,8 +111,9 @@ export default function BlackHoleCanvas() {
       const a = Math.random() * Math.PI * 2;
       radii[i] = r;
       angles[i] = a;
-      // Gentle, serene Interstellar rotation
-      speeds[i] = 0.08 / Math.sqrt(r);
+
+      // Truly majestic, slow Keplerian orbit: ~0.15 to 0.22 rad/sec (~30-40s per rev)
+      speeds[i] = (0.05 + 0.12 / Math.sqrt(r)) * 0.45;
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.3);
@@ -169,9 +170,9 @@ export default function BlackHoleCanvas() {
     scene.add(ambientParticles);
 
     // ------------------------------------------------------------------------
-    // 6. ENGINE STATE: CALM BASE SPEED (0.75)
+    // 6. ENGINE STATE: GENTLE CRUISING SPEED
     // ------------------------------------------------------------------------
-    const es = { camZ: 20, camY: 3.2, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 0.75 };
+    const es = { camZ: 20, camY: 3.2, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 1.0 };
 
     let mouseNDC = new THREE.Vector2(0, 0);
     let mouseSmooth = new THREE.Vector2(0, 0);
@@ -208,7 +209,7 @@ export default function BlackHoleCanvas() {
     window.addEventListener('resize', onResize);
 
     // ------------------------------------------------------------------------
-    // 7. RENDER LOOP: ORIGINAL RIPPLE WAVE & CALM UNBROKEN ORBIT
+    // 7. RENDER LOOP: SILK SMOOTH DRIFT & ORIGINAL SINUSOIDAL RIPPLE
     // ------------------------------------------------------------------------
     const clock = new THREE.Clock();
     let animId;
@@ -251,7 +252,8 @@ export default function BlackHoleCanvas() {
 
       for (let i = 0; i < particleCount; i++) {
         const r = radii[i];
-        angles[i] -= speeds[i] * dt * spd * 60;
+        // Truly slow, silky Keplerian drift (NO arbitrary * 60 multiplier!)
+        angles[i] -= speeds[i] * dt * spd;
 
         const bx = anchorX + Math.cos(angles[i]) * r;
         const bz = Math.sin(angles[i]) * r;
@@ -270,12 +272,12 @@ export default function BlackHoleCanvas() {
             const force = Math.cos(norm * Math.PI * 0.5) * 0.35 * hoverStrength;
             rx = (dx / d) * force;
             rz = (dz / d) * force;
-            ry = (1.0 - norm) * 0.28 * Math.sin(t * 4.5) * hoverStrength;
+            ry = (1.0 - norm) * 0.28 * Math.sin(t * 3.5) * hoverStrength;
           }
         }
 
-        // ORIGINAL RIPPLE WAVE: Sinusoidal spiral ripple winding out across the disk
-        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.22;
+        // ORIGINAL RIPPLE WAVE: Gentle, slow sinusoidal spiral ripple winding outward
+        const spiralWave = Math.sin(t * 1.3 + angles[i] * 2.2 + r * 1.5) * 0.20;
 
         p[i * 3]     = bx + rx;
         p[i * 3 + 1] = spiralWave + ry;
@@ -307,9 +309,9 @@ export default function BlackHoleCanvas() {
       }
       ambientParticles.geometry.attributes.position.needsUpdate = true;
 
-      halo.scale.setScalar(1 + Math.sin(t * 1.8) * 0.015);
-      outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
-      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
+      halo.scale.setScalar(1 + Math.sin(t * 1.5) * 0.012);
+      outerRing.scale.setScalar(1 + Math.cos(t * 1.2) * 0.012);
+      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.0) * 0.010);
 
       renderer.render(scene, camera);
     }

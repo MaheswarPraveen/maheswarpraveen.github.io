@@ -16,7 +16,6 @@ export default function App() {
 
     const cards = Array.from(container.querySelectorAll('.card'));
     const splits = [];
-    const swallowTimelines = [];
 
     cards.forEach((card, cIdx) => {
       const isHero = cIdx === 0;
@@ -35,7 +34,7 @@ export default function App() {
 
       chars.forEach((c) => {
         c.dataset.orig = c.textContent;
-        c._state = 0; // 0: orig, 1: scramble, 2: locked_zero, 3: swallowed
+        c._state = 0; // 0: original, 1: scramble, 2: locked zero, 3: flight
       });
 
       let offsets = [];
@@ -45,34 +44,50 @@ export default function App() {
           return { x: rect.left, y: rect.top };
         });
       }
-
       measureCharPositions();
 
       // ----------------------------------------------------------------------
-      // AUTONOMOUS SWALLOW TIMELINE (Self-Completing: Zero Mid-Air Freezing!)
+      // BUTTERY SMOOTH SCRUBBED GSAP PINNING (1.2s Silky Damping, Generous Runway)
       // ----------------------------------------------------------------------
-      const animState = { progress: 0 };
-      const swallowTl = gsap.timeline({ paused: true });
-      swallowTimelines.push(swallowTl);
+      const cardTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: card,
+          start: "center center", // Locks dead-center at 50vh middle-left
+          end: "+=125%",          // Generous runway — NO RUSHING, NO FAST GLITCHES
+          pin: true,
+          pinSpacing: true,
+          scrub: 1.2,             // Silky smooth GSAP physics damping
+          onEnter: () => measureCharPositions(),
+          onEnterBack: () => measureCharPositions(),
+          onLeave: () => {
+            card.style.opacity = '0';
+          },
+          onLeaveBack: () => {
+            card.style.opacity = '1';
+          }
+        }
+      });
 
-      swallowTl.to(animState, {
+      const animState = { progress: 0 };
+
+      cardTl.to(animState, {
         progress: 1.0,
-        duration: 0.75,
-        ease: "power2.inOut",
+        ease: "none",
         onUpdate: () => {
-          const animT = animState.progress;
+          const p = animState.progress;
           const bhScreen = window.__getBHScreenCoord
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
+          // Reading plateau (0.0 to 0.30): completely solid, readable English
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            // Staggered cascade across 58% of animation
-            const charStart = (idx / totalChars) * 0.58;
-            const scrambleDur = 0.16;
-            const holdZeroDur = 0.04; // Momentary flash — NO STICKING OR FREEZING
+            // Cascade transformation starts from 0.30 to 0.70 (word by word)
+            const charStart = 0.30 + (idx / totalChars) * 0.38;
+            const scrambleDur = 0.12;
+            const holdZeroDur = 0.04;
 
-            if (animT < charStart) {
+            if (p < charStart) {
               if (c._state !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
@@ -84,9 +99,9 @@ export default function App() {
               continue;
             }
 
-            const localProgress = animT - charStart;
+            const localProgress = p - charStart;
 
-            // Phase A: Flickering golden 0s and 1s
+            // Phase A: Gentle flicker into golden 0s and 1s
             if (localProgress < scrambleDur) {
               if (c._state !== 1) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
@@ -97,7 +112,7 @@ export default function App() {
                 c._state = 1;
               }
             }
-            // Phase B: Momentary flash of golden '0'
+            // Phase B: Momentary golden '0'
             else if (localProgress < scrambleDur + holdZeroDur) {
               if (c._state !== 2) {
                 c.textContent = '0';
@@ -108,33 +123,33 @@ export default function App() {
                 c._state = 2;
               }
             }
-            // Phase C: Immediate fluid 3D orbital curve into Black Hole
+            // Phase C: Smooth 3D curve into Black Hole singularity
             else {
               if (c._state !== 3) {
                 c.textContent = '0';
                 c._state = 3;
               }
 
-              const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.26);
-              const accel = Math.pow(swallowT, 2.0);
+              const flightT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.20);
+              const accel = Math.pow(flightT, 2.0);
 
               const origin = offsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
               const dx = bhScreen.x - origin.x;
               const dy = bhScreen.y - origin.y;
 
               const swirlAngle = idx * 0.10 + accel * 3.2;
-              const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
-              const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
+              const swirlX = Math.sin(swirlAngle) * 20 * (1 - accel);
+              const swirlY = Math.cos(swirlAngle) * 15 * (1 - accel);
 
               const curX = dx * accel + swirlX;
               const curY = dy * accel + swirlY;
-              const curZ = -accel * 550;
+              const curZ = -accel * 500;
 
               const scaleX = 1.0 + accel * 0.35;
               const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
               const rotX = accel * 52;
               const rotZ = -accel * 16;
-              const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.2));
+              const remainingOpacity = Math.max(0, 1.0 - Math.pow(flightT, 2.0));
 
               c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
               c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
@@ -143,52 +158,19 @@ export default function App() {
             }
           }
 
-          // Card boxes fade smoothly
-          const boxFade = Math.max(0, 1.0 - animT * 1.5);
+          // Card boxes dissolve smoothly
+          const boxFade = p < 0.40 ? 1.0 : Math.max(0, 1.0 - (p - 0.40) * 2.5);
           boxes.forEach((b) => {
             b.style.opacity = boxFade.toFixed(2);
           });
-          card.style.opacity = Math.max(0, 1.0 - Math.pow(animT, 1.8)).toFixed(2);
-        }
-      });
 
-      // ----------------------------------------------------------------------
-      // SCROLLTRIGGER: Pinned Dead-Center in Middle-Left (50vh)
-      // ----------------------------------------------------------------------
-      ScrollTrigger.create({
-        trigger: card,
-        start: "center center", // Pins immediately when content is dead-center (50vh)!
-        end: "+=75%",           // Clean 75vh reading & transition runway
-        pin: true,
-        pinSpacing: true,
-        onEnter: () => measureCharPositions(),
-        onEnterBack: () => measureCharPositions(),
-        onUpdate: (self) => {
-          // If scrolled past threshold 0.25, play autonomous swallow to completion!
-          if (self.progress >= 0.25) {
-            if (swallowTl.progress() < 1 && !swallowTl.isActive()) {
-              swallowTl.play();
-            }
-          }
-          // If scrolled back up, reverse back to original state!
-          else if (self.progress < 0.15) {
-            if (swallowTl.progress() > 0 && !swallowTl.isActive()) {
-              swallowTl.reverse();
-            }
-          }
-        },
-        onLeave: () => {
-          swallowTl.progress(1);
-          card.style.opacity = '0';
-        },
-        onLeaveBack: () => {
-          swallowTl.progress(0);
-          card.style.opacity = '1';
+          // Whole card smoothly fades out near the end of pin runway
+          card.style.opacity = p < 0.70 ? '1' : Math.max(0, 1.0 - (p - 0.70) * 3.3).toFixed(2);
         }
       });
     });
 
-    // Terminal Whiteout Flash at the very end of scroll
+    // Terminal Whiteout Flash at the very end of scroll runway
     ScrollTrigger.create({
       trigger: '.scroll-end-trigger',
       start: "top 70%",
