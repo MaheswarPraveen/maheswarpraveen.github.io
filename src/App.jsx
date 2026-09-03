@@ -48,22 +48,22 @@ export default function App() {
       measureCharPositions();
 
       // ----------------------------------------------------------------------
-      // PINNED SLIDE SCROLLTRIGGER: Generous, Controlled Runway (+=110%)
+      // PINNED SLIDE SCROLLTRIGGER: Natural Arrival & Smooth Uninterrupted Swallow
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: isHero ? "top top" : "center center",
-        end: isHero ? "+=95%" : "+=110%", // Generous runway: smooth, deliberate pacing!
+        start: isHero ? "top top" : "top 30%", // Arrives quickly into center view
+        end: isHero ? "+=75%" : "+=85%",      // Comfortable runway: no rushing, no dead time
         pin: true,
         pinSpacing: true,
-        scrub: 1.2, // Smooth scrub damping
+        scrub: 1.0,
         onEnter: () => measureCharPositions(),
         onEnterBack: () => measureCharPositions(),
         onUpdate: (self) => {
           const p = self.progress;
 
-          // 1. GENEROUS DWELL TIME (0.0 to 0.32): Solid, readable English
-          if (p <= 0.32) {
+          // 1. DWELL TIME (0.0 to 0.28): Solid, clean English
+          if (p <= 0.28) {
             chars.forEach((c) => {
               if (c._state !== 0) {
                 c.textContent = c.dataset.orig;
@@ -88,14 +88,15 @@ export default function App() {
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
-          // 2. DELIBERATE, SMOOTH BINARY CASCADE (0.32 to 1.00)
-          const animT = (p - 0.32) / 0.68; // 0.0 to 1.0
+          // 2. PROGRESSIVE CASCADE (0.28 to 1.00): Cascades word by word, NO FREEZING on zero!
+          const animT = (p - 0.28) / 0.72; // 0.0 to 1.0
 
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            const charStart = (idx / totalChars) * 0.32;
-            const scrambleDur = 0.24; // Stretched scramble duration: gradual, readable transformation!
-            const holdZeroDur = 0.18; // Stretched hold duration: clearly see the golden zeroes
+            // Stretched cascade across 62% of scroll: lines turn to numbers gradually, NOT all at once!
+            const charStart = (idx / totalChars) * 0.62;
+            const scrambleDur = 0.18; // Brief scramble into 0s and 1s
+            const holdZeroDur = 0.04; // Momentary flash of golden zero — ZERO STICKING/FREEZING!
 
             if (animT < charStart) {
               if (c._state !== 0) {
@@ -111,7 +112,7 @@ export default function App() {
 
             const localProgress = animT - charStart;
 
-            // Phase A: Slowly, deliberately scrambling into golden 0s and 1s
+            // Phase A: Flickering in golden 0s and 1s
             if (localProgress < scrambleDur) {
               if (c._state !== 1) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
@@ -122,7 +123,7 @@ export default function App() {
                 c._state = 1;
               }
             }
-            // Phase B: Holds as solid glowing golden '0'
+            // Phase B: Momentary flash of solid golden '0'
             else if (localProgress < scrambleDur + holdZeroDur) {
               if (c._state !== 2) {
                 c.textContent = '0';
@@ -133,7 +134,7 @@ export default function App() {
                 c._state = 2;
               }
             }
-            // Phase C: Graceful, slow 3D orbital curve into the Black Hole
+            // Phase C: IMMEDIATELY starts fluid 3D orbital curve into Black Hole (NO FREEZING)
             else {
               if (c._state !== 3) {
                 c.textContent = '0';
@@ -168,7 +169,7 @@ export default function App() {
             }
           }
 
-          // Container & tags dissolve gently
+          // Container & tags dissolve gently as characters enter black hole
           const boxProgress = Math.max(0, (animT - 0.45) / 0.50);
           const boxFade = Math.max(0, 1.0 - boxProgress * 1.3);
           card.style.opacity = boxFade.toFixed(2);
@@ -231,7 +232,7 @@ export default function App() {
       {/* 60+ FPS Three.js WebGL Black Hole Canvas */}
       <BlackHoleCanvas />
 
-      {/* UI Container with 100vh Pinned Slides */}
+      {/* UI Container with Pinned Slides */}
       <main id="ui-container" ref={containerRef}>
         {/* Slide 0: Hero */}
         <header className="card hero-card">

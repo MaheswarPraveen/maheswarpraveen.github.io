@@ -90,7 +90,7 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 PARTICLES (CALM, MAJESTIC SPEED & DRAMATIC 3D WAVES)
+    // 4. ACCRETION DISK: 24,000 PARTICLES (CONTINUOUS FLUID MOTION + RIPPLE)
     // ------------------------------------------------------------------------
     const particleCount = 24000;
     const geometry = new THREE.BufferGeometry();
@@ -107,12 +107,12 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 1.85 + rN * 12.5; // Expansive reach (14.35 max radius)
+      const r = 1.85 + rN * 12.5; // Expansive reach
       const a = Math.random() * Math.PI * 2;
       radii[i] = r;
       angles[i] = a;
-      // Controlled, slow, hypnotic Keplerian velocity (calm, NOT spinning fast!)
-      speeds[i] = 0.08 / Math.sqrt(r);
+      // Fluid, natural orbital velocity: NEVER pauses, NEVER frantically spins
+      speeds[i] = 0.20 / Math.sqrt(r);
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.3);
@@ -132,7 +132,7 @@ export default function BlackHoleCanvas() {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const particles = new THREE.Points(geometry, new THREE.PointsMaterial({
-      size: 0.08,
+      size: 0.075,
       map: sphereTexture,
       vertexColors: true,
       transparent: true,
@@ -169,9 +169,9 @@ export default function BlackHoleCanvas() {
     scene.add(ambientParticles);
 
     // ------------------------------------------------------------------------
-    // 6. ENGINE STATE: CALM BASE SPEED (0.90) & OBLIQUE 3D PERSPECTIVE
+    // 6. ENGINE STATE: CONTINUOUS UNBROKEN SPEED (baseSpeed: 1.6)
     // ------------------------------------------------------------------------
-    const es = { camZ: 20, camY: 3.0, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 0.90 };
+    const es = { camZ: 20, camY: 3.2, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 1.6 };
 
     let mouseNDC = new THREE.Vector2(0, 0);
     let mouseSmooth = new THREE.Vector2(0, 0);
@@ -208,7 +208,7 @@ export default function BlackHoleCanvas() {
     window.addEventListener('resize', onResize);
 
     // ------------------------------------------------------------------------
-    // 7. RENDER LOOP: DRAMATIC 3D SINUSOIDAL PLASMA WAVE
+    // 7. RENDER LOOP: ORIGINAL RIPPLE WAVE FORM
     // ------------------------------------------------------------------------
     const clock = new THREE.Clock();
     let animId;
@@ -242,9 +242,10 @@ export default function BlackHoleCanvas() {
         rawPlaneTarget.set(9999, 0, 9999);
       }
 
+      // CONSTANT STEADY SPEED — NEVER PAUSES
       const spd = es.baseSpeed;
       const p = particles.geometry.attributes.position.array;
-      const REPEL_RADIUS = 0.55;
+      const REPEL_RADIUS = 0.65;
       const REPEL_RADIUS_SQ = REPEL_RADIUS * REPEL_RADIUS;
       const checkRepel = (hoverStrength > 0.02 && rawPlaneTarget.x < 9000);
       const targetR = checkRepel ? Math.hypot(rawPlaneTarget.x - anchorX, rawPlaneTarget.z) : -1;
@@ -258,6 +259,7 @@ export default function BlackHoleCanvas() {
 
         let rx = 0, rz = 0, ry = 0;
 
+        // Interactive mouse cursor ripple
         if (checkRepel && Math.abs(r - targetR) < REPEL_RADIUS) {
           const dx = bx - rawPlaneTarget.x;
           const dz = bz - rawPlaneTarget.z;
@@ -269,16 +271,12 @@ export default function BlackHoleCanvas() {
             const force = Math.cos(norm * Math.PI * 0.5) * 0.35 * hoverStrength;
             rx = (dx / d) * force;
             rz = (dz / d) * force;
-            ry = (1.0 - norm) * 0.22 * Math.sin(t * 3.5) * hoverStrength;
+            ry = (1.0 - norm) * 0.28 * Math.sin(t * 4.5) * hoverStrength;
           }
         }
 
-        // DRAMATIC 3D PLASMA WAVE: Clear vertical crests and troughs that roll rhythmically
-        const rNorm = Math.min(1.0, (r - 1.85) / 10.0);
-        const waveAmp = 0.45 * Math.sin(rNorm * Math.PI); // Crests in mid-disk
-        const wave1 = Math.sin(angles[i] * 2.0 - t * 1.2 + r * 0.8) * waveAmp;
-        const wave2 = Math.cos(angles[i] * 3.0 + t * 0.8 - r * 0.5) * (waveAmp * 0.4);
-        const spiralWave = wave1 + wave2;
+        // ORIGINAL RIPPLE WAVE: Sinusoidal spiral ripple winding out across the disk
+        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.22;
 
         p[i * 3]     = bx + rx;
         p[i * 3 + 1] = spiralWave + ry;
@@ -310,9 +308,9 @@ export default function BlackHoleCanvas() {
       }
       ambientParticles.geometry.attributes.position.needsUpdate = true;
 
-      halo.scale.setScalar(1 + Math.sin(t * 1.5) * 0.015);
-      outerRing.scale.setScalar(1 + Math.cos(t * 1.2) * 0.015);
-      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.0) * 0.012);
+      halo.scale.setScalar(1 + Math.sin(t * 1.8) * 0.015);
+      outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
+      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
 
       renderer.render(scene, camera);
     }
@@ -321,29 +319,26 @@ export default function BlackHoleCanvas() {
     animate();
 
     // ------------------------------------------------------------------------
-    // 8. MASTER CAMERA TIMELINE: OBLIQUE 3D TILT (NEVER TOP-DOWN FLAT!)
+    // 8. MASTER CAMERA TIMELINE: OBLIQUE 3D PERSPECTIVE (NO TOP-DOWN FLATTENING)
     // ------------------------------------------------------------------------
     const masterTl = gsap.timeline({
       scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 1.2 }
     });
 
-    // Gently moves camera closer while keeping the dramatic 3D wave angle fully intact
     masterTl.to(es, {
-      camZ: 16.0,
-      camY: 4.2,
-      camX: 3.5,
-      lookX: 3.5,
-      baseSpeed: 0.95,
+      camZ: 17.0,
+      camY: 3.8,
+      camX: 3.0,
+      lookX: 3.0,
       duration: 0.5,
       ease: "power1.inOut"
     });
 
     masterTl.to(es, {
-      camY: 5.0,
-      camX: anchorX * 0.6,
-      lookX: anchorX * 0.6,
-      camZ: 12.0,
-      baseSpeed: 1.05,
+      camY: 4.4,
+      camX: anchorX * 0.5,
+      lookX: anchorX * 0.5,
+      camZ: 14.0,
       duration: 0.5,
       ease: "power2.inOut"
     });
