@@ -114,3 +114,10 @@ Automated continuity log maintained by offGIT.
 - Directive: YES
 - Rationale: User approved migration to Vite + React. Initializing Vite project, creating modular components (BlackHoleCanvas, HeroSlide, ProjectSlide, StackSlide), centralizing project data, and configuring GitHub Actions for GitHub Pages deployment.
 - Updated `CONTEXT.md`, `index.html` (+3/-104 lines).
+
+## 2026-09-04 02:38:24 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: FIRST SHOW ME
+- Rationale: Starting local Vite server on port 8080 and capturing visual screenshots across scroll states (Hero, Project 01, Infall) to display to the user directly.
+- Updated `CONTEXT.md`, `node_modules/@babel/types/lib/validators/isReferenced.js`, `node_modules/gsap/dist/ScrollTrigger.min.js.map` (+99/-18 lines).
+- Key changes: function isReferenced(node, parent, grandparent) {; return (grandparent == null ? void 0 : grandparent.type) !== "ObjectPattern";
