@@ -1,12 +1,12 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 04:18:31
+**Last Synced:** 2026-09-04 04:39:26
 
 ## Current Focus & Active State
 
 - Directive: wtf is this and wtf is 0aheswar, dude fuck this . just fix neatly . all are very fast the binary tranform. why cant yoiu just fix for gods sake
 - Rationale: The user hates seeing partial words like '0aheswar' during the scroll-driven scramble, and feels the transition is too fast. Also, a bug in measureCharPositions (reading bounding client rects while transformed) corrupts origin positions, causing characters to overlap and get stuck in mid-air. Fix: (1) Make all characters scramble synchronously (no cascade index offset) to prevent partial English/Binary words. (2) Increase pin end to '+=250%' to lengthen the scroll distance and slow down the scrub speed. (3) Measure char positions once on mount before any transforms are applied, and never re-measure during onEnter/onEnterBack.
-- Updated `CONTEXT.md` (+3/-26 lines).
+- Applied workspace modifications (+0/-13 lines).
 
 ## Recent Context Stream
 

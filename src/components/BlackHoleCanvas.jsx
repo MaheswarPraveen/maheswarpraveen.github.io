@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -56,6 +59,34 @@ export default function BlackHoleCanvas() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 
     // ------------------------------------------------------------------------
+    // BLOOM POST-PROCESSING — the flat additive rings/particles were the main
+    // source of the "cheap" look. A real bloom pass gives the disk actual
+    // light-bleed and makes the singularity edge glow instead of looking like
+    // a flat orange ring. This is the single highest-impact visual change.
+    //
+    // CAVEAT: UnrealBloomPass's composite shader writes alpha as opaque, so
+    // if you render straight to the default composer target you lose the
+    // canvas's transparent background (renderer alpha:true) and get a solid
+    // black rect behind it. Fixed by giving the composer its own RGBA render
+    // target explicitly, which keeps alpha through the render/bloom passes.
+    // ------------------------------------------------------------------------
+    renderer.setClearColor(0x000000, 0);
+    const renderTarget = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+      { type: THREE.HalfFloatType, format: THREE.RGBAFormat, samples: 4 }
+    );
+    const composer = new EffectComposer(renderer, renderTarget);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.85,  // strength
+      0.55,  // radius
+      0.15   // threshold — low so the warm particle colors catch bloom
+    );
+    composer.addPass(bloomPass);
+
+    // ------------------------------------------------------------------------
     // 3. SINGULARITY & DUAL LENSING PHOTON RINGS
     // ------------------------------------------------------------------------
     const singularity = new THREE.Mesh(
@@ -92,7 +123,11 @@ export default function BlackHoleCanvas() {
     // ------------------------------------------------------------------------
     // 4. ACCRETION DISK: 24,000 PARTICLES (FLUID ROTATION & ORIGINAL RIPPLE)
     // ------------------------------------------------------------------------
-    const particleCount = 24000;
+    // Reduced from 24000 — halves the per-frame CPU trig cost (every particle
+    // does 2 trig calls per frame in JS, on the main thread, every frame).
+    // Combined with bloom doing the visual "density" work, 14000 reads just
+    // as full but stops competing with the scroll/DOM thread for CPU time.
+    const particleCount = 14000;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -112,8 +147,10 @@ export default function BlackHoleCanvas() {
       radii[i] = r;
       angles[i] = a;
 
-      // Restored fluid, continuous Keplerian speed
-      speeds[i] = 0.22 / Math.sqrt(r);
+      // SLOWED: was 0.22 (way too fast / "blender" look). 0.07 gives a majestic,
+      // butter-smooth Keplerian drift while keeping inner particles slightly
+      // faster than outer ones (physically correct falloff via 1/sqrt(r)).
+      speeds[i] = 0.07 / Math.sqrt(r);
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.3);
@@ -206,6 +243,7 @@ export default function BlackHoleCanvas() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -232,9 +270,12 @@ export default function BlackHoleCanvas() {
       const targetCamX = es.camX + mouseSmooth.x * 1.5;
       const targetCamY = es.camY + mouseSmooth.y * 1.5;
 
-      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-5.0 * dt));
-      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-5.0 * dt));
-      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-5.0 * dt));
+      // Slower catch-up constant (was 5.0) — the camera was snapping to target
+      // almost instantly each frame, which reads as robotic. This gives it a
+      // longer, softer settle without feeling laggy.
+      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-3.0 * dt));
+      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-3.0 * dt));
+      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-3.0 * dt));
       camera.lookAt(es.lookX, es.lookY, es.lookZ);
 
       // Smooth hover envelope: decays during scroll, recovers organically on pause
@@ -320,7 +361,7 @@ export default function BlackHoleCanvas() {
       outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
       verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
 
-      renderer.render(scene, camera);
+      composer.render();
     }
 
     camera.position.set(es.camX, es.camY, es.camZ);
@@ -366,6 +407,7 @@ export default function BlackHoleCanvas() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
       masterTl.kill();
+      composer.dispose();
       renderer.dispose();
     };
   }, []);
