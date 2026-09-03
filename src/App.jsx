@@ -16,6 +16,7 @@ export default function App() {
 
     const cards = Array.from(container.querySelectorAll('.card'));
     const splits = [];
+    const swallowTimelines = [];
 
     cards.forEach((card, cIdx) => {
       const isHero = cIdx === 0;
@@ -37,9 +38,9 @@ export default function App() {
         c._state = 0; // 0: orig, 1: scramble, 2: locked_zero, 3: swallowed
       });
 
-      let charOffsets = [];
+      let offsets = [];
       function measureCharPositions() {
-        charOffsets = chars.map((c) => {
+        offsets = chars.map((c) => {
           const rect = c.getBoundingClientRect();
           return { x: rect.left, y: rect.top };
         });
@@ -48,55 +49,28 @@ export default function App() {
       measureCharPositions();
 
       // ----------------------------------------------------------------------
-      // PINNED SLIDE SCROLLTRIGGER: Natural Arrival & Smooth Uninterrupted Swallow
+      // AUTONOMOUS SWALLOW TIMELINE (Self-Completing: Zero Mid-Air Freezing!)
       // ----------------------------------------------------------------------
-      ScrollTrigger.create({
-        trigger: card,
-        start: isHero ? "top top" : "top 30%", // Arrives quickly into center view
-        end: isHero ? "+=75%" : "+=85%",      // Comfortable runway: no rushing, no dead time
-        pin: true,
-        pinSpacing: true,
-        scrub: 1.0,
-        onEnter: () => measureCharPositions(),
-        onEnterBack: () => measureCharPositions(),
-        onUpdate: (self) => {
-          const p = self.progress;
+      const animState = { progress: 0 };
+      const swallowTl = gsap.timeline({ paused: true });
+      swallowTimelines.push(swallowTl);
 
-          // 1. DWELL TIME (0.0 to 0.28): Solid, clean English
-          if (p <= 0.28) {
-            chars.forEach((c) => {
-              if (c._state !== 0) {
-                c.textContent = c.dataset.orig;
-                c.style.color = '';
-                c.style.opacity = '1';
-                c.style.transform = '';
-                c.style.textShadow = '';
-                c._state = 0;
-              }
-            });
-            card.style.opacity = '1';
-            boxes.forEach((b) => {
-              b.style.opacity = '1';
-              b.style.borderColor = '';
-            });
-            return;
-          }
-
-          if (charOffsets.length !== totalChars) measureCharPositions();
-
+      swallowTl.to(animState, {
+        progress: 1.0,
+        duration: 0.75,
+        ease: "power2.inOut",
+        onUpdate: () => {
+          const animT = animState.progress;
           const bhScreen = window.__getBHScreenCoord
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
-          // 2. PROGRESSIVE CASCADE (0.28 to 1.00): Cascades word by word, NO FREEZING on zero!
-          const animT = (p - 0.28) / 0.72; // 0.0 to 1.0
-
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            // Stretched cascade across 62% of scroll: lines turn to numbers gradually, NOT all at once!
-            const charStart = (idx / totalChars) * 0.62;
-            const scrambleDur = 0.18; // Brief scramble into 0s and 1s
-            const holdZeroDur = 0.04; // Momentary flash of golden zero — ZERO STICKING/FREEZING!
+            // Staggered cascade across 58% of animation
+            const charStart = (idx / totalChars) * 0.58;
+            const scrambleDur = 0.16;
+            const holdZeroDur = 0.04; // Momentary flash — NO STICKING OR FREEZING
 
             if (animT < charStart) {
               if (c._state !== 0) {
@@ -112,7 +86,7 @@ export default function App() {
 
             const localProgress = animT - charStart;
 
-            // Phase A: Flickering in golden 0s and 1s
+            // Phase A: Flickering golden 0s and 1s
             if (localProgress < scrambleDur) {
               if (c._state !== 1) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
@@ -123,7 +97,7 @@ export default function App() {
                 c._state = 1;
               }
             }
-            // Phase B: Momentary flash of solid golden '0'
+            // Phase B: Momentary flash of golden '0'
             else if (localProgress < scrambleDur + holdZeroDur) {
               if (c._state !== 2) {
                 c.textContent = '0';
@@ -134,17 +108,17 @@ export default function App() {
                 c._state = 2;
               }
             }
-            // Phase C: IMMEDIATELY starts fluid 3D orbital curve into Black Hole (NO FREEZING)
+            // Phase C: Immediate fluid 3D orbital curve into Black Hole
             else {
               if (c._state !== 3) {
                 c.textContent = '0';
                 c._state = 3;
               }
 
-              const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.28);
+              const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.26);
               const accel = Math.pow(swallowT, 2.0);
 
-              const origin = charOffsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
+              const origin = offsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
               const dx = bhScreen.x - origin.x;
               const dy = bhScreen.y - origin.y;
 
@@ -169,32 +143,47 @@ export default function App() {
             }
           }
 
-          // Container & tags dissolve gently as characters enter black hole
-          const boxProgress = Math.max(0, (animT - 0.45) / 0.50);
-          const boxFade = Math.max(0, 1.0 - boxProgress * 1.3);
-          card.style.opacity = boxFade.toFixed(2);
+          // Card boxes fade smoothly
+          const boxFade = Math.max(0, 1.0 - animT * 1.5);
           boxes.forEach((b) => {
             b.style.opacity = boxFade.toFixed(2);
           });
+          card.style.opacity = Math.max(0, 1.0 - Math.pow(animT, 1.8)).toFixed(2);
+        }
+      });
+
+      // ----------------------------------------------------------------------
+      // SCROLLTRIGGER: Pinned Dead-Center in Middle-Left (50vh)
+      // ----------------------------------------------------------------------
+      ScrollTrigger.create({
+        trigger: card,
+        start: "center center", // Pins immediately when content is dead-center (50vh)!
+        end: "+=75%",           // Clean 75vh reading & transition runway
+        pin: true,
+        pinSpacing: true,
+        onEnter: () => measureCharPositions(),
+        onEnterBack: () => measureCharPositions(),
+        onUpdate: (self) => {
+          // If scrolled past threshold 0.25, play autonomous swallow to completion!
+          if (self.progress >= 0.25) {
+            if (swallowTl.progress() < 1 && !swallowTl.isActive()) {
+              swallowTl.play();
+            }
+          }
+          // If scrolled back up, reverse back to original state!
+          else if (self.progress < 0.15) {
+            if (swallowTl.progress() > 0 && !swallowTl.isActive()) {
+              swallowTl.reverse();
+            }
+          }
         },
         onLeave: () => {
-          chars.forEach((c) => { c.textContent = '0'; c.style.opacity = '0'; c._state = 3; });
+          swallowTl.progress(1);
           card.style.opacity = '0';
         },
         onLeaveBack: () => {
-          chars.forEach((c) => {
-            c.textContent = c.dataset.orig;
-            c.style.color = '';
-            c.style.opacity = '1';
-            c.style.transform = '';
-            c.style.textShadow = '';
-            c._state = 0;
-          });
+          swallowTl.progress(0);
           card.style.opacity = '1';
-          boxes.forEach((b) => {
-            b.style.borderColor = '';
-            b.style.opacity = '1';
-          });
         }
       });
     });
@@ -232,7 +221,7 @@ export default function App() {
       {/* 60+ FPS Three.js WebGL Black Hole Canvas */}
       <BlackHoleCanvas />
 
-      {/* UI Container with Pinned Slides */}
+      {/* UI Container with Middle-Left Pinned Slides */}
       <main id="ui-container" ref={containerRef}>
         {/* Slide 0: Hero */}
         <header className="card hero-card">

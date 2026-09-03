@@ -13,7 +13,7 @@ export default function BlackHoleCanvas() {
     if (!canvas) return;
 
     // ------------------------------------------------------------------------
-    // 1. PROCEDURAL GLOWING SPHERE TEXTURE (Cosmic Core + Soft Corona)
+    // 1. PROCEDURAL GLOWING SPHERE TEXTURE
     // ------------------------------------------------------------------------
     function createSphereTexture() {
       const texCanvas = document.createElement('canvas');
@@ -44,7 +44,7 @@ export default function BlackHoleCanvas() {
     const sphereTexture = createSphereTexture();
 
     // ------------------------------------------------------------------------
-    // 2. SCENE & CAMERA (camZ=20, anchorX=7.0, oblique 3D viewing angle)
+    // 2. SCENE & CAMERA (camZ=20, anchorX=7.0)
     // ------------------------------------------------------------------------
     const anchorX = 7.0;
     const blackHolePos = new THREE.Vector3(anchorX, 0, 0);
@@ -90,7 +90,7 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 PARTICLES (CONTINUOUS FLUID MOTION + RIPPLE)
+    // 4. ACCRETION DISK: 24,000 PARTICLES (DEEPLY CALM SPEED & ORIGINAL RIPPLE)
     // ------------------------------------------------------------------------
     const particleCount = 24000;
     const geometry = new THREE.BufferGeometry();
@@ -107,12 +107,12 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 1.85 + rN * 12.5; // Expansive reach
+      const r = 1.85 + rN * 12.5;
       const a = Math.random() * Math.PI * 2;
       radii[i] = r;
       angles[i] = a;
-      // Fluid, natural orbital velocity: NEVER pauses, NEVER frantically spins
-      speeds[i] = 0.20 / Math.sqrt(r);
+      // Gentle, serene Interstellar rotation
+      speeds[i] = 0.08 / Math.sqrt(r);
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.3);
@@ -169,9 +169,9 @@ export default function BlackHoleCanvas() {
     scene.add(ambientParticles);
 
     // ------------------------------------------------------------------------
-    // 6. ENGINE STATE: CONTINUOUS UNBROKEN SPEED (baseSpeed: 1.6)
+    // 6. ENGINE STATE: CALM BASE SPEED (0.75)
     // ------------------------------------------------------------------------
-    const es = { camZ: 20, camY: 3.2, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 1.6 };
+    const es = { camZ: 20, camY: 3.2, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 0.75 };
 
     let mouseNDC = new THREE.Vector2(0, 0);
     let mouseSmooth = new THREE.Vector2(0, 0);
@@ -208,7 +208,7 @@ export default function BlackHoleCanvas() {
     window.addEventListener('resize', onResize);
 
     // ------------------------------------------------------------------------
-    // 7. RENDER LOOP: ORIGINAL RIPPLE WAVE FORM
+    // 7. RENDER LOOP: ORIGINAL RIPPLE WAVE & CALM UNBROKEN ORBIT
     // ------------------------------------------------------------------------
     const clock = new THREE.Clock();
     let animId;
@@ -242,7 +242,6 @@ export default function BlackHoleCanvas() {
         rawPlaneTarget.set(9999, 0, 9999);
       }
 
-      // CONSTANT STEADY SPEED — NEVER PAUSES
       const spd = es.baseSpeed;
       const p = particles.geometry.attributes.position.array;
       const REPEL_RADIUS = 0.65;
@@ -259,7 +258,7 @@ export default function BlackHoleCanvas() {
 
         let rx = 0, rz = 0, ry = 0;
 
-        // Interactive mouse cursor ripple
+        // Interactive ripple on mouse hover
         if (checkRepel && Math.abs(r - targetR) < REPEL_RADIUS) {
           const dx = bx - rawPlaneTarget.x;
           const dz = bz - rawPlaneTarget.z;
@@ -319,7 +318,7 @@ export default function BlackHoleCanvas() {
     animate();
 
     // ------------------------------------------------------------------------
-    // 8. MASTER CAMERA TIMELINE: OBLIQUE 3D PERSPECTIVE (NO TOP-DOWN FLATTENING)
+    // 8. MASTER CAMERA TIMELINE: OBLIQUE 3D PERSPECTIVE (NO FLATTENING)
     // ------------------------------------------------------------------------
     const masterTl = gsap.timeline({
       scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 1.2 }

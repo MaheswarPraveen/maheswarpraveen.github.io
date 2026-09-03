@@ -1,6 +1,6 @@
 /* ==========================================================================
    MAHESWAR PRAVEEN — EDITORIAL ENGINEERING DOSSIER
-   Deep Space Black Hole Aesthetic | Luxury Typography | 100vh Pinned Slides
+   Deep Space Black Hole Aesthetic | Luxury Typography | Middle-Left Centered
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
@@ -43,7 +43,7 @@ body {
   pointer-events: none;
 }
 
-/* Terminal Whiteout Flash Overlay (Only at very end of page) */
+/* Terminal Whiteout Flash Overlay */
 #flash-overlay {
   position: fixed;
   top: 0;
@@ -57,30 +57,31 @@ body {
 }
 
 /* ==========================================================================
-   SLIDE-BY-SLIDE UI ARCHITECTURE (100vh Pinned Slides)
+   MIDDLE-LEFT ALIGNED SLIDE ARCHITECTURE (100vh Locked Dead-Center)
    ========================================================================== */
 
 #ui-container {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: clamp(480px, 36vw, 600px);
-  margin-left: clamp(36px, 7vw, 120px);
+  max-width: clamp(480px, 35vw, 580px);
+  margin-left: clamp(48px, 8vw, 120px);
   padding: 0;
   pointer-events: auto;
 }
 
-/* Each Slide: Natural cadence, next slide arrives quickly without dead space */
+/* Each Slide: Exactly 100vh with content locked dead-center vertically */
 .card {
   position: relative;
   width: 100%;
-  min-height: 65vh;
-  min-height: 65dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* Exactly 50vh dead center vertically */
+  align-items: flex-start;  /* Crisp left margin alignment */
   margin: 0;
-  padding: 24px 0;
+  padding: 0;
   perspective: 1200px;
   perspective-origin: 65% 50%;
   transform-style: preserve-3d;
@@ -240,7 +241,7 @@ body {
 @media (max-width: 1440px) and (min-width: 1025px) {
   #ui-container {
     max-width: clamp(440px, 33vw, 500px);
-    margin-left: clamp(36px, 5vw, 64px);
+    margin-left: clamp(36px, 6vw, 64px);
     perspective-origin: 60% 50%;
   }
   .name-title { font-size: 3.2rem; }
@@ -251,7 +252,7 @@ body {
 @media (max-width: 1024px) and (min-width: 769px) {
   #ui-container {
     max-width: 440px;
-    margin-left: clamp(28px, 4vw, 44px);
+    margin-left: clamp(28px, 5vw, 44px);
     perspective-origin: 55% 50%;
   }
   .name-title { font-size: 2.8rem; }
