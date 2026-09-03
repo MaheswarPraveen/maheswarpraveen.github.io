@@ -108,3 +108,9 @@ Automated continuity log maintained by offGIT.
 - Directive: CAN WE USE IT IN GITHUB PAGE AND TELL ME THE ADVANTAGES
 - Rationale: Answering whether React can be deployed on GitHub Pages (yes, via Vite build or GitHub Actions CI/CD) and detailing the practical advantages of React for this portfolio.
 - Updated `CONTEXT.md` (+3/-17 lines).
+
+## 2026-09-04 02:32:21 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: YES
+- Rationale: User approved migration to Vite + React. Initializing Vite project, creating modular components (BlackHoleCanvas, HeroSlide, ProjectSlide, StackSlide), centralizing project data, and configuring GitHub Actions for GitHub Pages deployment.
+- Updated `CONTEXT.md`, `index.html` (+3/-104 lines).
