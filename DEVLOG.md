@@ -145,3 +145,9 @@ Automated continuity log maintained by offGIT.
 - Directive: BRO WHAT THE FUCK. ITS GOES AWAY LIKE AS FAST I SCROLL AND IT TAKES A LOT OF TIME FOR NEXT SLIDE TO BE IN THE MIDDEL. ARE YOU HIGH. COME ON BROTHER
 - Rationale: Diagnosing root cause: Separate 100vh cards with pinSpacing created an empty 130vh scrolling chasm between slides, while low pin runway made text vanish instantly. Redesigning to a master pinned container with absolute-stacked slides: each slide has ample center dwell time, scrambles and swallows gracefully, while the next slide seamlessly emerges directly in the center with ZERO empty scrolling.
 - Updated `CONTEXT.md` (+3/-19 lines).
+
+## 2026-09-04 03:06:54 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: WTF IS THIS, WTF YOURE MESSING UP IT MORE AGAIN AND AGAIN. FIRST THE WAVE FORM , NIW THIS , BREAKING EACH BY EACH. WHY DONT YOU TAKE A LOOK SCROLL FIND ISSUE AND FIX AT THIS POINT. IM DONE BRO
+- Rationale: The user showed a screenshot where absolute-stacked slides caused the Hero zeroes to float directly on top of Slide 1, and the wave form was flattened. Rolling back to the proven separate-card pinned architecture, restoring the authentic 3D particle wave math (spiralWave, 0.07 size, 0.34 speed), ensuring zero ghost overlapping zeroes, and testing with a multi-step scroll script to verify every slide visually.
+- Updated `CONTEXT.md` (+3/-19 lines).

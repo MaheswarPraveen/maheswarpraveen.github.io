@@ -13,7 +13,7 @@ export default function BlackHoleCanvas() {
     if (!canvas) return;
 
     // ------------------------------------------------------------------------
-    // 1. SILKY-SMOOTH LUMINOUS SPHERE TEXTURE (Continuous Molten Plasma)
+    // 1. PROCEDURAL GLOWING SPHERE TEXTURE (Authentic Sharp Cosmic Glow)
     // ------------------------------------------------------------------------
     function createSphereTexture() {
       const texCanvas = document.createElement('canvas');
@@ -23,9 +23,9 @@ export default function BlackHoleCanvas() {
 
       const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
       grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
-      grad.addColorStop(0.18, 'rgba(255, 230, 160, 0.9)');
-      grad.addColorStop(0.38, 'rgba(255, 120, 20, 0.45)');
-      grad.addColorStop(0.68, 'rgba(200, 40, 0, 0.15)');
+      grad.addColorStop(0.2, 'rgba(255, 235, 170, 0.95)');
+      grad.addColorStop(0.5, 'rgba(255, 130, 30, 0.5)');
+      grad.addColorStop(0.8, 'rgba(220, 50, 0, 0.15)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = grad;
@@ -90,7 +90,7 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 SILKY PARTICLES (SLOW MAJESTIC MOTION: baseSpeed 0.60)
+    // 4. ACCRETION DISK: 24,000 LENGTHY PARTICLES (AUTHENTIC SPIRAL WAVE)
     // ------------------------------------------------------------------------
     const particleCount = 24000;
     const geometry = new THREE.BufferGeometry();
@@ -107,15 +107,14 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 1.85 + rN * 12.5;
+      const r = 1.85 + rN * 12.5; // Expansive reach (14.35 max radius)
       const a = Math.random() * Math.PI * 2;
       radii[i] = r;
       angles[i] = a;
-      // Stately, hypnotic cosmic speed (over 70% slower!)
-      speeds[i] = 0.052 / Math.sqrt(r);
+      speeds[i] = 0.34 / Math.sqrt(r); // Authentic Keplerian velocity
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.35);
+      positions[i * 3 + 1] = (Math.random() - 0.5) * (0.2 + rN * 0.4);
       positions[i * 3 + 2] = Math.sin(a) * r;
 
       if (rN < 0.22) {
@@ -132,11 +131,11 @@ export default function BlackHoleCanvas() {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const particles = new THREE.Points(geometry, new THREE.PointsMaterial({
-      size: 0.13,
+      size: 0.07,
       map: sphereTexture,
       vertexColors: true,
       transparent: true,
-      opacity: 0.70,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     }));
@@ -159,19 +158,19 @@ export default function BlackHoleCanvas() {
     ambientGeo.setAttribute('position', new THREE.BufferAttribute(ambientPos, 3));
     const ambientParticles = new THREE.Points(ambientGeo, new THREE.PointsMaterial({
       color: 0xffcc88,
-      size: 0.12,
+      size: 0.1,
       map: sphereTexture,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.4,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     }));
     scene.add(ambientParticles);
 
     // ------------------------------------------------------------------------
-    // 6. ENGINE STATE & SLOW COSMIC PACE (baseSpeed: 0.65)
+    // 6. ENGINE STATE & SMOOTH PARALLAX
     // ------------------------------------------------------------------------
-    const es = { camZ: 21, camY: 2.5, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 0.65 };
+    const es = { camZ: 21, camY: 2.5, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 3.8 };
 
     let mouseNDC = new THREE.Vector2(0, 0);
     let mouseSmooth = new THREE.Vector2(0, 0);
@@ -208,7 +207,7 @@ export default function BlackHoleCanvas() {
     window.addEventListener('resize', onResize);
 
     // ------------------------------------------------------------------------
-    // 7. 60+ FPS RENDER LOOP: SLOW, HYPNOTIC SILK WAVES
+    // 7. 60+ FPS RENDER LOOP: AUTHENTIC SPIRAL WAVE
     // ------------------------------------------------------------------------
     const clock = new THREE.Clock();
     let animId;
@@ -218,20 +217,20 @@ export default function BlackHoleCanvas() {
       const dt = Math.min(clock.getDelta(), 0.05);
       const t = clock.getElapsedTime();
 
-      const parallaxSpeed = isScrolling ? 2.5 : 4.0;
+      const parallaxSpeed = isScrolling ? 4.0 : 6.0;
       mouseSmooth.x += (mouseNDC.x - mouseSmooth.x) * (1.0 - Math.exp(-parallaxSpeed * dt));
       mouseSmooth.y += (mouseNDC.y - mouseSmooth.y) * (1.0 - Math.exp(-parallaxSpeed * dt));
 
       const targetCamX = es.camX + mouseSmooth.x * 1.6;
       const targetCamY = es.camY + mouseSmooth.y * 1.6;
 
-      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-4.0 * dt));
-      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-4.0 * dt));
-      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-4.0 * dt));
+      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-6.0 * dt));
+      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-6.0 * dt));
+      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-6.0 * dt));
       camera.lookAt(es.lookX, es.lookY, es.lookZ);
 
       const targetHover = (isMousePresent && !isScrolling) ? 1.0 : 0.0;
-      hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-5.0 * dt));
+      hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-8.0 * dt));
 
       if (isMousePresent && hoverStrength > 0.01) {
         raycaster.setFromCamera(mouseSmooth, camera);
@@ -242,10 +241,10 @@ export default function BlackHoleCanvas() {
         rawPlaneTarget.set(9999, 0, 9999);
       }
 
-      // Slow, majestic Keplerian drift
+      // Keplerian Accretion Disk: Authentic Spiral Wave Math
       const spd = es.baseSpeed;
       const p = particles.geometry.attributes.position.array;
-      const REPEL_RADIUS = 0.65;
+      const REPEL_RADIUS = 0.55;
       const REPEL_RADIUS_SQ = REPEL_RADIUS * REPEL_RADIUS;
       const checkRepel = (hoverStrength > 0.02 && rawPlaneTarget.x < 9000);
       const targetR = checkRepel ? Math.hypot(rawPlaneTarget.x - anchorX, rawPlaneTarget.z) : -1;
@@ -270,14 +269,12 @@ export default function BlackHoleCanvas() {
             const force = Math.cos(norm * Math.PI * 0.5) * 0.35 * hoverStrength;
             rx = (dx / d) * force;
             rz = (dz / d) * force;
-            ry = (1.0 - norm) * 0.20 * Math.sin(t * 2.5) * hoverStrength;
+            ry = (1.0 - norm) * 0.22 * Math.sin(t * 5.0) * hoverStrength;
           }
         }
 
-        // Slow, hypnotic ocean wave harmonics
-        const wave1 = Math.sin(t * 0.35 + angles[i] * 1.8 + r * 1.1) * 0.28;
-        const wave2 = Math.cos(t * 0.18 - r * 0.7) * 0.14;
-        const spiralWave = wave1 + wave2;
+        // The authentic sweeping spiral wave factor
+        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.18;
 
         p[i * 3]     = bx + rx;
         p[i * 3 + 1] = spiralWave + ry;
@@ -292,9 +289,9 @@ export default function BlackHoleCanvas() {
         const ds = dx * dx + dy * dy + dz * dz;
         const g = Math.min(20 / (ds + 1), 1.4);
 
-        ambientVel[i * 3]     += dx * 0.0001 * g;
-        ambientVel[i * 3 + 1] += dy * 0.0001 * g;
-        ambientVel[i * 3 + 2] += dz * 0.0001 * g;
+        ambientVel[i * 3]     += dx * 0.0003 * g;
+        ambientVel[i * 3 + 1] += dy * 0.0003 * g;
+        ambientVel[i * 3 + 2] += dz * 0.0003 * g;
 
         ap[i * 3]     += ambientVel[i * 3];
         ap[i * 3 + 1] += ambientVel[i * 3 + 1];
@@ -309,9 +306,9 @@ export default function BlackHoleCanvas() {
       }
       ambientParticles.geometry.attributes.position.needsUpdate = true;
 
-      halo.scale.setScalar(1 + Math.sin(t * 0.8) * 0.012);
-      outerRing.scale.setScalar(1 + Math.cos(t * 0.6) * 0.012);
-      verticalHalo.scale.setScalar(1 + Math.sin(t * 0.5) * 0.010);
+      halo.scale.setScalar(1 + Math.sin(t * 2.5) * 0.018);
+      outerRing.scale.setScalar(1 + Math.cos(t * 2.0) * 0.018);
+      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.8) * 0.015);
 
       renderer.render(scene, camera);
     }
@@ -320,7 +317,7 @@ export default function BlackHoleCanvas() {
     animate();
 
     // ------------------------------------------------------------------------
-    // 8. MASTER CAMERA TIMELINE (Slow, Continuous Tilt)
+    // 8. MASTER CAMERA TIMELINE (Smooth Tilt Across Page)
     // ------------------------------------------------------------------------
     const masterTl = gsap.timeline({
       scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 1.2 }
@@ -331,7 +328,7 @@ export default function BlackHoleCanvas() {
       camY: 7.5,
       camX: 3.5,
       lookX: 3.5,
-      baseSpeed: 0.75,
+      baseSpeed: 4.2,
       duration: 0.5,
       ease: "power1.inOut"
     });
@@ -341,7 +338,7 @@ export default function BlackHoleCanvas() {
       camX: anchorX,
       lookX: anchorX,
       camZ: 0.2,
-      baseSpeed: 0.90,
+      baseSpeed: 4.8,
       duration: 0.5,
       ease: "power2.inOut"
     });

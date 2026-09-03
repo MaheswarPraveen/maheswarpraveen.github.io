@@ -8,118 +8,66 @@ import { personalInfo, projects, technicalSkills } from './data/projects';
 gsap.registerPlugin(ScrollTrigger);
 
 export default function App() {
-  const deckRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    const deck = deckRef.current;
-    if (!deck) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const slides = Array.from(deck.querySelectorAll('.slide-frame'));
-    const totalSlides = slides.length;
-
-    // Initialize SplitType for all slides
+    // ------------------------------------------------------------------------
+    // SETUP SPLITTYPE ON EACH CARD
+    // ------------------------------------------------------------------------
+    const cards = Array.from(container.querySelectorAll('.card'));
     const splits = [];
-    const slideData = slides.map((slide, slideIdx) => {
-      const isHero = slideIdx === 0;
-      const isStack = slideIdx === totalSlides - 1;
+
+    cards.forEach((card, cIdx) => {
+      const isHero = cIdx === 0;
+      const isStack = cIdx === cards.length - 1;
 
       let selectors = '.section-title, .tag, .project-index, .section-desc';
       if (isHero) selectors = '.name-line, .hero-subtitle, .clean-link';
       else if (isStack) selectors = '.section-title, .project-index, .stack-label, .stack-val';
 
-      const split = new SplitType(slide.querySelectorAll(selectors), { types: 'chars' });
+      const split = new SplitType(card.querySelectorAll(selectors), { types: 'chars' });
       splits.push(split);
 
-      const chars = Array.from(slide.querySelectorAll('.char'));
-      const boxes = Array.from(slide.querySelectorAll('.tag, .section-title, .clean-link, .stack-col'));
+      const chars = Array.from(card.querySelectorAll('.char'));
+      const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .clean-link, .stack-col'));
+      const totalChars = chars.length;
 
       chars.forEach((c) => {
         c.dataset.orig = c.textContent;
-        c._state = 0; // 0: orig, 1: scramble, 2: locked_0, 3: swallowed
+        c._state = 0; // 0: orig, 1: scramble, 2: locked_zero, 3: swallowed
       });
 
-      let offsets = [];
-      const measure = () => {
-        offsets = chars.map((c) => {
+      let charOffsets = [];
+      function measureCharPositions() {
+        charOffsets = chars.map((c) => {
           const rect = c.getBoundingClientRect();
           return { x: rect.left, y: rect.top };
         });
-      };
-
-      return { slide, chars, boxes, offsets, measure, isHero, isStack };
-    });
-
-    // Initial measurement
-    slideData.forEach((sd) => sd.measure());
-
-    // ------------------------------------------------------------------------
-    // DECOUPLED RAF TICKER: 15Hz Silky Binary Flicker (Zero Reflows)
-    // ------------------------------------------------------------------------
-    let rafId;
-    let frame = 0;
-    function flickerLoop() {
-      rafId = requestAnimationFrame(flickerLoop);
-      frame++;
-      if (frame % 4 === 0) {
-        for (let s = 0; s < totalSlides; s++) {
-          const chars = slideData[s].chars;
-          for (let c = 0; c < chars.length; c++) {
-            if (chars[c]._state === 1) {
-              chars[c].textContent = Math.random() > 0.5 ? '1' : '0';
-            }
-          }
-        }
       }
-    }
-    flickerLoop();
 
-    // ------------------------------------------------------------------------
-    // MASTER CONTINUOUS SCROLLTRIGGER (720vh Scroll Runway)
-    // ------------------------------------------------------------------------
-    const slice = 1.0 / totalSlides;
+      measureCharPositions();
 
-    const masterTrigger = ScrollTrigger.create({
-      trigger: '#deck-scroll-track',
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 1.0,
-      onUpdate: (self) => {
-        const p = self.progress;
+      // ----------------------------------------------------------------------
+      // PINNED SLIDE SCROLLTRIGGER: Generous Dwell -> Binary -> 3D Swallow
+      // ----------------------------------------------------------------------
+      ScrollTrigger.create({
+        trigger: card,
+        start: "top top",
+        end: "+=75%", // Comfortable 75vh dwell and transition runway
+        pin: true,
+        pinSpacing: true,
+        scrub: 1.0,
+        onEnter: () => measureCharPositions(),
+        onEnterBack: () => measureCharPositions(),
+        onUpdate: (self) => {
+          const p = self.progress;
 
-        const bhScreen = window.__getBHScreenCoord
-          ? window.__getBHScreenCoord()
-          : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
-
-        // Update each slide according to its slice
-        for (let i = 0; i < totalSlides; i++) {
-          const sd = slideData[i];
-          const slideStart = i * slice;
-          const slideEnd = (i + 1) * slice;
-
-          // Slide is far in the future
-          if (p < slideStart - slice * 0.35) {
-            sd.slide.style.opacity = '0';
-            sd.slide.classList.remove('is-active');
-            continue;
-          }
-
-          // Slide is far in the past (swallowed)
-          if (p > slideEnd) {
-            sd.slide.style.opacity = '0';
-            sd.slide.classList.remove('is-active');
-            continue;
-          }
-
-          sd.slide.classList.add('is-active');
-
-          // Case A: Slide is fading in as the previous slide swallows
-          if (p < slideStart) {
-            const emergeT = Math.max(0, (p - (slideStart - slice * 0.35)) / (slice * 0.35));
-            sd.slide.style.opacity = emergeT.toFixed(2);
-            sd.slide.style.transform = `scale(${(0.96 + 0.04 * emergeT).toFixed(3)})`;
-
-            // Reset characters to pristine original
-            sd.chars.forEach((c) => {
+          // 1. GENEROUS READING DWELL TIME (0.0 to 0.35): Solid, centered, fully readable!
+          if (p <= 0.35) {
+            chars.forEach((c) => {
               if (c._state !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
@@ -129,47 +77,28 @@ export default function App() {
                 c._state = 0;
               }
             });
-            sd.boxes.forEach((b) => {
+            card.style.opacity = '1';
+            boxes.forEach((b) => {
               b.style.opacity = '1';
               b.style.borderColor = '';
             });
-            continue;
+            return;
           }
 
-          // Case B: Active Slide Window (p is between slideStart and slideEnd)
-          const localT = (p - slideStart) / slice; // 0.0 to 1.0 within this slide
+          if (charOffsets.length !== totalChars) measureCharPositions();
 
-          // 1. GENEROUS DWELL / READING PHASE (0.0 to 0.48): Rock-solid, centered, fully readable!
-          if (localT <= 0.48) {
-            sd.slide.style.opacity = '1';
-            sd.slide.style.transform = 'scale(1)';
+          const bhScreen = window.__getBHScreenCoord
+            ? window.__getBHScreenCoord()
+            : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
-            sd.chars.forEach((c) => {
-              if (c._state !== 0) {
-                c.textContent = c.dataset.orig;
-                c.style.color = '';
-                c.style.opacity = '1';
-                c.style.transform = '';
-                c.style.textShadow = '';
-                c._state = 0;
-              }
-            });
-            sd.boxes.forEach((b) => {
-              b.style.opacity = '1';
-              b.style.borderColor = '';
-            });
-            continue;
-          }
+          // 2. BINARY SCRAMBLE & 3D SWALLOW (0.35 to 1.00)
+          const animT = (p - 0.35) / 0.65; // 0.0 to 1.0
 
-          // 2. MATRIX SCRAMBLE & 3D SWALLOW PHASE (0.48 to 1.00)
-          const animT = (localT - 0.48) / 0.52; // 0.0 to 1.0 for the swallow
-          if (sd.offsets.length !== sd.chars.length) sd.measure();
-
-          for (let cIdx = 0; cIdx < sd.chars.length; cIdx++) {
-            const c = sd.chars[cIdx];
-            const charStart = (cIdx / sd.chars.length) * 0.28;
-            const scrambleDur = 0.20;
-            const holdZeroDur = 0.16;
+          for (let idx = 0; idx < totalChars; idx++) {
+            const c = chars[idx];
+            const charStart = (idx / totalChars) * 0.28;
+            const scrambleDur = 0.18;
+            const holdZeroDur = 0.15;
 
             if (animT < charStart) {
               if (c._state !== 0) {
@@ -183,10 +112,10 @@ export default function App() {
               continue;
             }
 
-            const charProgress = animT - charStart;
+            const localProgress = animT - charStart;
 
-            // Phase A: Scramble into 0s and 1s with amber phosphor glow
-            if (charProgress < scrambleDur) {
+            // Phase A: Scrambling into glowing 0s and 1s
+            if (localProgress < scrambleDur) {
               if (c._state !== 1) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
                 c.style.color = '#ffb030';
@@ -196,8 +125,8 @@ export default function App() {
                 c._state = 1;
               }
             }
-            // Phase B: Lock into solid glowing golden '0'
-            else if (charProgress < scrambleDur + holdZeroDur) {
+            // Phase B: Locks into solid glowing golden '0'
+            else if (localProgress < scrambleDur + holdZeroDur) {
               if (c._state !== 2) {
                 c.textContent = '0';
                 c.style.color = '#ffa020';
@@ -214,68 +143,88 @@ export default function App() {
                 c._state = 3;
               }
 
-              const swallowProg = Math.min(1.0, (charProgress - scrambleDur - holdZeroDur) / 0.36);
-              const accel = Math.pow(swallowProg, 2.2);
+              const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.32);
+              const accel = Math.pow(swallowT, 2.2);
 
-              const origin = sd.offsets[cIdx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
+              const origin = charOffsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
               const dx = bhScreen.x - origin.x;
               const dy = bhScreen.y - origin.y;
 
-              const swirlAngle = cIdx * 0.12 + accel * 3.4;
-              const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
-              const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
+              const swirlAngle = idx * 0.12 + accel * 3.5;
+              const swirlX = Math.sin(swirlAngle) * 25 * (1 - accel);
+              const swirlY = Math.cos(swirlAngle) * 18 * (1 - accel);
 
               const curX = dx * accel + swirlX;
               const curY = dy * accel + swirlY;
-              const curZ = -accel * 520;
+              const curZ = -accel * 550;
 
-              const scaleX = 1.0 + accel * 0.35;
-              const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
-              const rotX = accel * 52;
-              const rotZ = -accel * 16;
-              const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowProg, 2.2));
+              const scaleX = 1.0 + accel * 0.4;
+              const scaleY = Math.max(0.1, 1.0 - accel * 0.8);
+              const rotX = accel * 55;
+              const rotZ = -accel * 18;
+              const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.5));
 
               c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
               c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-              c.style.textShadow = `0 0 ${Math.max(2, 10 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
+              c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
               c.style.opacity = remainingOpacity.toFixed(2);
             }
           }
 
-          // Container & tags dissolve smoothly in tandem
-          const fadeT = Math.max(0, (animT - 0.40) / 0.55);
-          const boxFade = Math.max(0, 1.0 - fadeT * 1.3);
-          sd.slide.style.opacity = boxFade.toFixed(2);
-          sd.boxes.forEach((b) => {
+          // Container & tags dissolve smoothly
+          const boxProgress = Math.max(0, (animT - 0.40) / 0.55);
+          const boxFade = Math.max(0, 1.0 - boxProgress * 1.3);
+          card.style.opacity = boxFade.toFixed(2);
+          boxes.forEach((b) => {
             b.style.opacity = boxFade.toFixed(2);
           });
+        },
+        onLeave: () => {
+          chars.forEach((c) => { c.textContent = '0'; c.style.opacity = '0'; c._state = 3; });
+          card.style.opacity = '0';
+        },
+        onLeaveBack: () => {
+          chars.forEach((c) => {
+            c.textContent = c.dataset.orig;
+            c.style.color = '';
+            c.style.opacity = '1';
+            c.style.transform = '';
+            c.style.textShadow = '';
+            c._state = 0;
+          });
+          card.style.opacity = '1';
+          boxes.forEach((b) => {
+            b.style.borderColor = '';
+            b.style.opacity = '1';
+          });
         }
+      });
+    });
 
-        // Terminal Whiteout Flash (After last slide swallows at end of universe)
+    // ------------------------------------------------------------------------
+    // TERMINAL WHITEOUT FLASH AT THE VERY END
+    // ------------------------------------------------------------------------
+    const endTrigger = ScrollTrigger.create({
+      trigger: '.scroll-end-trigger',
+      start: "top 70%",
+      end: "bottom bottom",
+      scrub: 1.0,
+      onUpdate: (self) => {
         const overlay = document.getElementById('flash-overlay');
-        if (overlay) {
-          if (p > 0.94) {
-            const flashT = (p - 0.94) / 0.06;
-            if (flashT < 0.5) {
-              overlay.style.backgroundColor = '#ffffff';
-              overlay.style.opacity = (flashT / 0.5).toFixed(2);
-            } else {
-              overlay.style.backgroundColor = '#000000';
-              overlay.style.opacity = ((flashT - 0.5) / 0.5).toFixed(2);
-            }
-          } else {
-            overlay.style.opacity = '0';
-          }
+        if (!overlay) return;
+        if (self.progress < 0.5) {
+          overlay.style.backgroundColor = '#ffffff';
+          overlay.style.opacity = (self.progress / 0.5).toFixed(2);
+        } else {
+          overlay.style.backgroundColor = '#000000';
+          overlay.style.opacity = ((self.progress - 0.5) / 0.5).toFixed(2);
         }
       }
     });
 
-    window.addEventListener('resize', () => slideData.forEach((sd) => sd.measure()));
-
     return () => {
-      cancelAnimationFrame(rafId);
-      masterTrigger.kill();
       splits.forEach((s) => s.revert());
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);
 
@@ -287,10 +236,10 @@ export default function App() {
       {/* 60+ FPS Three.js WebGL Black Hole Canvas */}
       <BlackHoleCanvas />
 
-      {/* Fixed Viewport: All slides exist in the EXACT same screen center! */}
-      <div id="deck-viewport" ref={deckRef}>
+      {/* UI Container with 100vh Pinned Slides */}
+      <main id="ui-container" ref={containerRef}>
         {/* Slide 0: Hero */}
-        <header className="slide-frame is-active" style={{ opacity: 1 }}>
+        <header className="card hero-card">
           <h1 className="name-title">
             <span className="name-line">{personalInfo.firstName}</span>
             <span className="name-line">{personalInfo.lastName}</span>
@@ -304,7 +253,7 @@ export default function App() {
 
         {/* Slides 1-7: Project Dossiers */}
         {projects.map((proj) => (
-          <section className="slide-frame" key={proj.id}>
+          <section className="card content-card" key={proj.id}>
             <span className="project-index">{proj.id} // {proj.category}</span>
             <h2 className="section-title">{proj.title}</h2>
             <p className="section-desc">{proj.description}</p>
@@ -317,7 +266,7 @@ export default function App() {
         ))}
 
         {/* Slide 8: Technical Capabilities */}
-        <section className="slide-frame">
+        <section className="card content-card">
           <span className="project-index">07 // STACK</span>
           <h2 className="section-title">Technical Capabilities</h2>
           <div className="stack-grid">
@@ -329,10 +278,10 @@ export default function App() {
             ))}
           </div>
         </section>
-      </div>
+      </main>
 
-      {/* Master Scroll Runway (720vh) */}
-      <div id="deck-scroll-track" />
+      {/* Terminal Runway */}
+      <div className="scroll-end-trigger" />
     </>
   );
 }
