@@ -1,28 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import React, { useRef } from 'react';
 import { technicalSkills } from '../data/projects';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useMatrixSwallow } from '../hooks/useMatrixSwallow';
 
 export default function StackSlide() {
   const stackRef = useRef(null);
 
-  useEffect(() => {
-    const card = stackRef.current;
-    if (!card) return;
-
-    const trigger = ScrollTrigger.create({
-      trigger: card,
-      start: "top top",
-      end: "+=100%",
-      pin: true,
-      pinSpacing: true,
-      scrub: 1.0
-    });
-
-    return () => trigger.kill();
-  }, []);
+  // Apply matrix scramble & 3D black hole swallow to Technical Capabilities!
+  useMatrixSwallow(stackRef, { isStack: true });
 
   return (
     <section className="card content-card" ref={stackRef} data-offset="8">

@@ -5,22 +5,25 @@ import SplitType from 'split-type';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
+export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = {}) {
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
 
-    // Split text into characters
-    const targetSelectors = isHero
-      ? '.name-title, .hero-subtitle, .clean-link'
-      : '.section-title, .tag, .project-index, .section-desc';
+    // Determine target selectors for character splitting
+    let targetSelectors = '.section-title, .tag, .project-index, .section-desc';
+    if (isHero) {
+      targetSelectors = '.name-title, .hero-subtitle, .clean-link';
+    } else if (isStack) {
+      targetSelectors = '.section-title, .project-index, .stack-label, .stack-val';
+    }
 
     const split = new SplitType(card.querySelectorAll(targetSelectors), {
       types: 'chars'
     });
 
     const chars = Array.from(card.querySelectorAll('.char'));
-    const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .hero-links, .clean-link'));
+    const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .hero-links, .clean-link, .stack-col'));
     const totalChars = chars.length;
 
     chars.forEach((c) => {
@@ -35,21 +38,20 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
       });
     }
 
-    // Measure once on mount and when scrolling near
     measureCharPositions();
 
-    // 1. SLIDE-BY-SLIDE FADE IN (As slide scrolls up into center view)
+    // 1. SLIDE-BY-SLIDE SMOOTH FADE IN
     let fadeInTrigger = null;
     if (!isHero) {
       fadeInTrigger = ScrollTrigger.create({
         trigger: card,
-        start: "top 90%",
-        end: "top 10%",
+        start: "top 95%",
+        end: "top 5%",
         scrub: 1.0,
         onUpdate: (self) => {
           if (self.progress < 1.0) {
-            const opacity = Math.min(1.0, self.progress * 1.4);
-            const scale = 0.95 + 0.05 * self.progress;
+            const opacity = Math.min(1.0, self.progress * 1.5);
+            const scale = 0.96 + 0.04 * self.progress;
             card.style.opacity = opacity.toFixed(2);
             card.style.transform = `scale(${scale.toFixed(3)})`;
           }
@@ -57,21 +59,28 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
       });
     }
 
-    // 2. PINNED CENTER MATRIX SCRAMBLE & 3D SWALLOW
+    // 2. PINNED SLIDE SCRAMBLE & 3D ORBITAL SWALLOW (SNAPPY SCROLL GAP: +=45%)
+    let lastStep = -1;
+
     const pinTrigger = ScrollTrigger.create({
       trigger: card,
       start: "top top",
-      end: isHero ? "+=80%" : "+=115%",
+      end: isHero ? "+=38%" : "+=48%", // Snappy, comfortable scroll distance!
       pin: true,
       pinSpacing: true,
-      scrub: 1.2,
+      scrub: 1.0,
       onEnter: () => measureCharPositions(),
       onEnterBack: () => measureCharPositions(),
       onUpdate: (self) => {
         const p = self.progress;
 
+        // Step quantization to eliminate wheel jitter & layout thrashing
+        const currentStep = Math.floor(p * 36);
+        if (currentStep === lastStep) return;
+        lastStep = currentStep;
+
         // Phase 0: Solid, pristine reading state in center of viewport
-        if (p <= 0.10) {
+        if (p <= 0.08) {
           chars.forEach((c) => {
             if (c.textContent !== c.dataset.orig) c.textContent = c.dataset.orig;
             c.style.color = '';
@@ -95,12 +104,11 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
           : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
         chars.forEach((c, idx) => {
-          // Cascading digital wave from top-to-bottom across the slide
-          const charStart = 0.10 + (idx / totalChars) * 0.30;
+          // Cascading digital wave from top-to-bottom
+          const charStart = 0.08 + (idx / totalChars) * 0.32;
           const scrambleDuration = 0.16;
           const holdZeroDuration = 0.14;
 
-          // Before cascade reaches this character
           if (p < charStart) {
             if (c.textContent !== c.dataset.orig) c.textContent = c.dataset.orig;
             c.style.color = '';
@@ -112,7 +120,7 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
 
           const localProgress = p - charStart;
 
-          // PHASE A: Glitching / Scrambling into 0s and 1s
+          // PHASE A: Glitching / Scrambling into 0s and 1s with golden phosphor glow
           if (localProgress < scrambleDuration) {
             c.textContent = Math.random() > 0.5 ? '1' : '0';
             c.style.color = Math.random() > 0.3 ? '#ffb030' : '#ffe480';
@@ -131,7 +139,7 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
           // PHASE C: Detaches and gets physically swallowed into the black hole!
           else {
             c.textContent = '0';
-            const swallowT = Math.min(1.0, (localProgress - scrambleDuration - holdZeroDuration) / 0.32);
+            const swallowT = Math.min(1.0, (localProgress - scrambleDuration - holdZeroDuration) / 0.30);
             const accel = Math.pow(swallowT, 2.2);
 
             const origin = charOffsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
@@ -153,20 +161,20 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
             const rotZ = -accel * 18;
             const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.5));
 
-            c.style.transform = `translate3d(${curX}px, ${curY}px, ${curZ}px) rotateX(${rotX}deg) rotateZ(${rotZ}deg) scale(${scaleX}, ${scaleY})`;
+            c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
             c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-            c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel))}px rgba(255, 120, 20, 0.8)`;
-            c.style.opacity = remainingOpacity;
+            c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
+            c.style.opacity = remainingOpacity.toFixed(2);
           }
         });
 
         // Pill tags, links & containers dissolve smoothly in tandem
-        const boxProgress = Math.max(0, (p - 0.48) / 0.42);
+        const boxProgress = Math.max(0, (p - 0.45) / 0.45);
         const boxFade = Math.max(0, 1.0 - boxProgress * 1.3);
-        card.style.opacity = boxFade;
+        card.style.opacity = boxFade.toFixed(2);
         boxes.forEach((b) => {
-          b.style.opacity = boxFade;
-          b.style.borderColor = `rgba(255, 255, 255, ${0.12 * boxFade})`;
+          b.style.opacity = boxFade.toFixed(2);
+          b.style.borderColor = `rgba(255, 255, 255, ${(0.12 * boxFade).toFixed(3)})`;
         });
       },
       onLeave: () => {
@@ -195,5 +203,5 @@ export function useMatrixSwallow(cardRef, { isHero = false } = {}) {
       pinTrigger.kill();
       split.revert();
     };
-  }, [isHero]);
+  }, [isHero, isStack]);
 }
