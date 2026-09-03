@@ -102,3 +102,9 @@ Automated continuity log maintained by offGIT.
 - Directive: DUDE SO MANY ERROS , FIRSRT OF ALL WHY IS THERE OTHER PROJECT AT DOWN WHEN THERES ANOTHER , LET IT COMES LIKE ONE BY ONE LIKE SLIDES. ALSO THE TEXTS ARE SMALL ON EVERYTHING, ALSO IT GOES TOO HIGH TO TURN TO 0 AND 1S AND DIAPPEAR AND ATLAST IN TECHINCAL ABILITIEES IT TURNS TO WHITE LIKE WTF. RUN 10 SUB AGENTS TO NIT PICK ANY SMALL ERRORS AND FIX IT AFTER RUNNING TH SAME 10 SUBAGENTS FIRST TO LOOKS FOR ANY REFERENCE OR TIPS OR IMPROVEMENTS , THEN APPLY IT
 - Rationale: Deploying 10 specialized subagents to audit every detail: 1) One-by-one slide pinning so only 1 project is visible at a time. 2) Typography scale enlargement (titles, descriptions, tags). 3) Eliminating the #flash-overlay white flash that blinds the Technical Capabilities card. 4) Binary scramble trigger repositioning. 5) 3D particle infall mechanics and performance.
 - Applied workspace modifications (+0/-0 lines).
+
+## 2026-09-04 02:21:54 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: CAN WE USE IT IN GITHUB PAGE AND TELL ME THE ADVANTAGES
+- Rationale: Answering whether React can be deployed on GitHub Pages (yes, via Vite build or GitHub Actions CI/CD) and detailing the practical advantages of React for this portfolio.
+- Updated `CONTEXT.md` (+3/-17 lines).
