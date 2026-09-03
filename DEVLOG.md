@@ -139,3 +139,9 @@ Automated continuity log maintained by offGIT.
 - Directive: ITS MAHESWAR AND IN NEXT LINE PRAVEEN . OKAY?
 - Rationale: Formatting the hero name into two distinct stacked lines: 'Maheswar' on the first line and 'Praveen' on the next line.
 - Updated `CONTEXT.md` (+3/-19 lines).
+
+## 2026-09-04 03:01:23 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: BRO WHAT THE FUCK. ITS GOES AWAY LIKE AS FAST I SCROLL AND IT TAKES A LOT OF TIME FOR NEXT SLIDE TO BE IN THE MIDDEL. ARE YOU HIGH. COME ON BROTHER
+- Rationale: Diagnosing root cause: Separate 100vh cards with pinSpacing created an empty 130vh scrolling chasm between slides, while low pin runway made text vanish instantly. Redesigning to a master pinned container with absolute-stacked slides: each slide has ample center dwell time, scrambles and swallows gracefully, while the next slide seamlessly emerges directly in the center with ZERO empty scrolling.
+- Updated `CONTEXT.md` (+3/-19 lines).

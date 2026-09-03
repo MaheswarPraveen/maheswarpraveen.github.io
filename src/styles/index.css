@@ -1,6 +1,6 @@
 /* ==========================================================================
    MAHESWAR PRAVEEN — EDITORIAL ENGINEERING DOSSIER
-   Deep Space Black Hole Aesthetic | Luxury Typography | 100vh Pinned Slides
+   Deep Space Black Hole Aesthetic | Luxury Typography | Stacked Master Deck
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=SF+Mono:wght@400;500;600&display=swap');
@@ -43,7 +43,7 @@ body {
   pointer-events: none;
 }
 
-/* Terminal Swallow Whiteout Flash Overlay */
+/* Terminal Whiteout Flash Overlay */
 #flash-overlay {
   position: fixed;
   top: 0;
@@ -57,53 +57,55 @@ body {
 }
 
 /* ==========================================================================
-   SLIDE-BY-SLIDE UI ARCHITECTURE (Zero Dead Gap, Continuous Flow)
+   STACKED MASTER DECK ARCHITECTURE
+   The viewport is fixed in center. All slides exist at the SAME screen position.
+   Zero distance between slides. Zero dead scrolling gaps.
    ========================================================================== */
 
-#ui-container {
+/* Outer scroll track that drives the master scrub */
+#deck-scroll-track {
   position: relative;
-  z-index: 10;
   width: 100%;
-  max-width: clamp(480px, 36vw, 600px);
-  margin-left: clamp(36px, 7vw, 120px);
-  padding: 0;
-  pointer-events: auto;
+  /* 8 slides * 90vh scroll runway = 720vh comfortable total travel */
+  height: 720vh;
 }
 
-/* Base Slide: Locks content in the exact vertical center with 3D perspective */
-.card {
-  position: relative;
-  width: 100%;
+/* Pinned Viewport Container */
+#deck-viewport {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
   height: 100vh;
-  min-height: 100vh;
-  min-height: 100dvh;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Individual Slide Frame: Stacked in the exact same screen center! */
+.slide-frame {
+  position: absolute;
+  top: 0;
+  left: clamp(36px, 7vw, 120px);
+  width: 100%;
+  max-width: clamp(480px, 36vw, 600px);
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin: 0;
   padding: 24px 0;
   perspective: 1200px;
   perspective-origin: 65% 50%;
   transform-style: preserve-3d;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
   will-change: opacity, transform;
 }
 
-.hero-card {
-  min-height: 100vh;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin: 0;
-}
-
-.content-card {
-  min-height: 100vh;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin: 0;
+.slide-frame.is-active {
+  pointer-events: auto;
+  visibility: visible;
 }
 
 /* ==========================================================================
@@ -239,7 +241,7 @@ body {
   line-height: 1.65;
 }
 
-/* High-Performance 60 FPS GPU-Accelerated Characters */
+/* High-Performance 60 FPS Monospace Characters */
 .char, .word {
   display: inline-block;
   transform-style: preserve-3d;
@@ -247,18 +249,12 @@ body {
   will-change: transform, opacity;
 }
 
-/* End-of-Page Scroll Runway */
-.scroll-end-trigger {
-  height: 25vh;
-  width: 100%;
-}
-
 /* ==========================================================================
    RESPONSIVE MEDIA QUERIES
    ========================================================================== */
 
 @media (max-width: 1440px) and (min-width: 1025px) {
-  #ui-container {
+  .slide-frame {
     max-width: clamp(440px, 33vw, 500px);
     margin-left: clamp(36px, 5vw, 64px);
     perspective-origin: 60% 50%;
@@ -269,7 +265,7 @@ body {
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
-  #ui-container {
+  .slide-frame {
     max-width: 440px;
     margin-left: clamp(28px, 4vw, 44px);
     perspective-origin: 55% 50%;
@@ -280,18 +276,13 @@ body {
 }
 
 @media (max-width: 768px) {
-  #ui-container {
+  .slide-frame {
     width: 100%;
     max-width: 100%;
-    margin-left: 0;
+    left: 0;
     padding-left: clamp(20px, 5vw, 28px);
     padding-right: clamp(20px, 5vw, 28px);
     perspective-origin: 50% 50%;
-  }
-  .card {
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: 24px 0;
   }
   .name-title { font-size: 2.5rem; }
   .section-title { font-size: 1.7rem; }
