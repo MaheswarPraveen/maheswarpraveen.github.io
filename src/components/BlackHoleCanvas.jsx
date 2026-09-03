@@ -13,7 +13,7 @@ export default function BlackHoleCanvas() {
     if (!canvas) return;
 
     // ------------------------------------------------------------------------
-    // 1. SILKY-SMOOTH LUMINOUS SPHERE TEXTURE (ZERO GRAINS, CONTINUOUS FLUID)
+    // 1. SILKY-SMOOTH LUMINOUS SPHERE TEXTURE (Continuous Molten Plasma)
     // ------------------------------------------------------------------------
     function createSphereTexture() {
       const texCanvas = document.createElement('canvas');
@@ -23,9 +23,9 @@ export default function BlackHoleCanvas() {
 
       const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
       grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
-      grad.addColorStop(0.15, 'rgba(255, 230, 160, 0.9)');
-      grad.addColorStop(0.35, 'rgba(255, 120, 20, 0.45)');
-      grad.addColorStop(0.65, 'rgba(200, 40, 0, 0.15)');
+      grad.addColorStop(0.18, 'rgba(255, 230, 160, 0.9)');
+      grad.addColorStop(0.38, 'rgba(255, 120, 20, 0.45)');
+      grad.addColorStop(0.68, 'rgba(200, 40, 0, 0.15)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.fillStyle = grad;
@@ -90,7 +90,7 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 SILKY FLUID PARTICLES (SLOW, LIQUID WAVES)
+    // 4. ACCRETION DISK: 24,000 SILKY PARTICLES (SLOW MAJESTIC MOTION: baseSpeed 0.60)
     // ------------------------------------------------------------------------
     const particleCount = 24000;
     const geometry = new THREE.BufferGeometry();
@@ -107,12 +107,12 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 1.85 + rN * 12.5; // Expansive reach (14.35 max radius)
+      const r = 1.85 + rN * 12.5;
       const a = Math.random() * Math.PI * 2;
       radii[i] = r;
       angles[i] = a;
-      // Stately, slow Keplerian drift (silk smooth pacing)
-      speeds[i] = 0.18 / Math.sqrt(r);
+      // Stately, hypnotic cosmic speed (over 70% slower!)
+      speeds[i] = 0.052 / Math.sqrt(r);
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.35);
@@ -131,7 +131,6 @@ export default function BlackHoleCanvas() {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // Size 0.13 + soft Gaussian falloff creates continuous fluid waves without graininess
     const particles = new THREE.Points(geometry, new THREE.PointsMaterial({
       size: 0.13,
       map: sphereTexture,
@@ -170,9 +169,9 @@ export default function BlackHoleCanvas() {
     scene.add(ambientParticles);
 
     // ------------------------------------------------------------------------
-    // 6. ENGINE STATE & SLOW, STATELY PACE (baseSpeed: 2.0)
+    // 6. ENGINE STATE & SLOW COSMIC PACE (baseSpeed: 0.65)
     // ------------------------------------------------------------------------
-    const es = { camZ: 21, camY: 2.5, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 2.0 };
+    const es = { camZ: 21, camY: 2.5, camX: 0, lookX: 0, lookY: 0, lookZ: 0, baseSpeed: 0.65 };
 
     let mouseNDC = new THREE.Vector2(0, 0);
     let mouseSmooth = new THREE.Vector2(0, 0);
@@ -209,7 +208,7 @@ export default function BlackHoleCanvas() {
     window.addEventListener('resize', onResize);
 
     // ------------------------------------------------------------------------
-    // 7. 60+ FPS RENDER LOOP: DEEP ROLLING SILK WAVES
+    // 7. 60+ FPS RENDER LOOP: SLOW, HYPNOTIC SILK WAVES
     // ------------------------------------------------------------------------
     const clock = new THREE.Clock();
     let animId;
@@ -219,22 +218,20 @@ export default function BlackHoleCanvas() {
       const dt = Math.min(clock.getDelta(), 0.05);
       const t = clock.getElapsedTime();
 
-      // Ultra-smooth mouse parallax with gentle easing
-      const parallaxSpeed = isScrolling ? 3.0 : 5.0;
+      const parallaxSpeed = isScrolling ? 2.5 : 4.0;
       mouseSmooth.x += (mouseNDC.x - mouseSmooth.x) * (1.0 - Math.exp(-parallaxSpeed * dt));
       mouseSmooth.y += (mouseNDC.y - mouseSmooth.y) * (1.0 - Math.exp(-parallaxSpeed * dt));
 
       const targetCamX = es.camX + mouseSmooth.x * 1.6;
       const targetCamY = es.camY + mouseSmooth.y * 1.6;
 
-      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-5.0 * dt));
-      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-5.0 * dt));
-      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-5.0 * dt));
+      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-4.0 * dt));
+      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-4.0 * dt));
+      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-4.0 * dt));
       camera.lookAt(es.lookX, es.lookY, es.lookZ);
 
-      // Smooth hover envelope
       const targetHover = (isMousePresent && !isScrolling) ? 1.0 : 0.0;
-      hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-6.0 * dt));
+      hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-5.0 * dt));
 
       if (isMousePresent && hoverStrength > 0.01) {
         raycaster.setFromCamera(mouseSmooth, camera);
@@ -245,7 +242,7 @@ export default function BlackHoleCanvas() {
         rawPlaneTarget.set(9999, 0, 9999);
       }
 
-      // Keplerian Accretion Disk Simulation: Slow, Continuous Silk Waves
+      // Slow, majestic Keplerian drift
       const spd = es.baseSpeed;
       const p = particles.geometry.attributes.position.array;
       const REPEL_RADIUS = 0.65;
@@ -262,7 +259,6 @@ export default function BlackHoleCanvas() {
 
         let rx = 0, rz = 0, ry = 0;
 
-        // 1D Radial early-out rejection
         if (checkRepel && Math.abs(r - targetR) < REPEL_RADIUS) {
           const dx = bx - rawPlaneTarget.x;
           const dz = bz - rawPlaneTarget.z;
@@ -274,13 +270,13 @@ export default function BlackHoleCanvas() {
             const force = Math.cos(norm * Math.PI * 0.5) * 0.35 * hoverStrength;
             rx = (dx / d) * force;
             rz = (dz / d) * force;
-            ry = (1.0 - norm) * 0.22 * Math.sin(t * 3.5) * hoverStrength;
+            ry = (1.0 - norm) * 0.20 * Math.sin(t * 2.5) * hoverStrength;
           }
         }
 
-        // Deep, harmonic rolling silk plasma waves
-        const wave1 = Math.sin(t * 0.9 + angles[i] * 2.2 + r * 1.3) * 0.32;
-        const wave2 = Math.cos(t * 0.5 - r * 0.8) * 0.16;
+        // Slow, hypnotic ocean wave harmonics
+        const wave1 = Math.sin(t * 0.35 + angles[i] * 1.8 + r * 1.1) * 0.28;
+        const wave2 = Math.cos(t * 0.18 - r * 0.7) * 0.14;
         const spiralWave = wave1 + wave2;
 
         p[i * 3]     = bx + rx;
@@ -296,9 +292,9 @@ export default function BlackHoleCanvas() {
         const ds = dx * dx + dy * dy + dz * dz;
         const g = Math.min(20 / (ds + 1), 1.4);
 
-        ambientVel[i * 3]     += dx * 0.0002 * g;
-        ambientVel[i * 3 + 1] += dy * 0.0002 * g;
-        ambientVel[i * 3 + 2] += dz * 0.0002 * g;
+        ambientVel[i * 3]     += dx * 0.0001 * g;
+        ambientVel[i * 3 + 1] += dy * 0.0001 * g;
+        ambientVel[i * 3 + 2] += dz * 0.0001 * g;
 
         ap[i * 3]     += ambientVel[i * 3];
         ap[i * 3 + 1] += ambientVel[i * 3 + 1];
@@ -313,9 +309,9 @@ export default function BlackHoleCanvas() {
       }
       ambientParticles.geometry.attributes.position.needsUpdate = true;
 
-      halo.scale.setScalar(1 + Math.sin(t * 1.8) * 0.015);
-      outerRing.scale.setScalar(1 + Math.cos(t * 1.4) * 0.015);
-      verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
+      halo.scale.setScalar(1 + Math.sin(t * 0.8) * 0.012);
+      outerRing.scale.setScalar(1 + Math.cos(t * 0.6) * 0.012);
+      verticalHalo.scale.setScalar(1 + Math.sin(t * 0.5) * 0.010);
 
       renderer.render(scene, camera);
     }
@@ -335,7 +331,7 @@ export default function BlackHoleCanvas() {
       camY: 7.5,
       camX: 3.5,
       lookX: 3.5,
-      baseSpeed: 2.2,
+      baseSpeed: 0.75,
       duration: 0.5,
       ease: "power1.inOut"
     });
@@ -345,7 +341,7 @@ export default function BlackHoleCanvas() {
       camX: anchorX,
       lookX: anchorX,
       camZ: 0.2,
-      baseSpeed: 2.8,
+      baseSpeed: 0.90,
       duration: 0.5,
       ease: "power2.inOut"
     });

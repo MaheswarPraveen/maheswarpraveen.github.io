@@ -43,7 +43,7 @@ body {
   pointer-events: none;
 }
 
-/* Terminal Swallow Whiteout Flash Overlay (Only at the very end of scroll) */
+/* Terminal Swallow Whiteout Flash Overlay */
 #flash-overlay {
   position: fixed;
   top: 0;
@@ -54,11 +54,10 @@ body {
   opacity: 0;
   pointer-events: none;
   z-index: 99999;
-  transition: opacity 0.3s ease;
 }
 
 /* ==========================================================================
-   SLIDE-BY-SLIDE UI ARCHITECTURE (100vh Pinned Slides — Snappy Scroll Gap)
+   SLIDE-BY-SLIDE UI ARCHITECTURE (Zero Dead Gap, Continuous Flow)
    ========================================================================== */
 
 #ui-container {
@@ -71,7 +70,7 @@ body {
   pointer-events: auto;
 }
 
-/* Base Slide: Locks content in the exact vertical center with its own 3D perspective */
+/* Base Slide: Locks content in the exact vertical center with 3D perspective */
 .card {
   position: relative;
   width: 100%;
@@ -82,11 +81,11 @@ body {
   flex-direction: column;
   justify-content: center;
   margin: 0;
-  padding: 40px 0;
+  padding: 24px 0;
   perspective: 1200px;
   perspective-origin: 65% 50%;
   transform-style: preserve-3d;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
 }
 
 .hero-card {
@@ -113,13 +112,17 @@ body {
 
 /* Hero Typography */
 .name-title {
-  font-size: clamp(3.2rem, 3.8vw, 4.2rem);
+  font-size: clamp(3.4rem, 4.2vw, 4.6rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   color: #f5f5f7;
-  margin-bottom: 12px;
-  line-height: 1.05;
+  margin-bottom: 16px;
+  line-height: 1.0;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.name-line {
+  display: block;
 }
 
 .hero-subtitle {
@@ -144,7 +147,7 @@ body {
   letter-spacing: -0.01em;
   padding-bottom: 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.2s ease;
+  transition: border-bottom-color 0.2s ease;
 }
 
 .clean-link:hover {
@@ -205,13 +208,6 @@ body {
   padding: 6px 14px;
   border-radius: 9999px;
   letter-spacing: 0.025em;
-  transition: all 0.2s ease;
-}
-
-.tag:hover {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Stack Grid & Values */
@@ -243,17 +239,17 @@ body {
   line-height: 1.65;
 }
 
-/* Buttery-Smooth Character Animation Styling */
+/* High-Performance 60 FPS GPU-Accelerated Characters */
 .char, .word {
   display: inline-block;
   transform-style: preserve-3d;
-  will-change: transform, opacity, color;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, color 0.25s ease, text-shadow 0.25s ease;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 /* End-of-Page Scroll Runway */
 .scroll-end-trigger {
-  height: 30vh;
+  height: 25vh;
   width: 100%;
 }
 
@@ -295,7 +291,7 @@ body {
   .card {
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 30px 0;
+    padding: 24px 0;
   }
   .name-title { font-size: 2.5rem; }
   .section-title { font-size: 1.7rem; }

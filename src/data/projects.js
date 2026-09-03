@@ -3,7 +3,9 @@
 // ==========================================================================
 
 export const personalInfo = {
-  name: "Maheswar N P",
+  firstName: "Maheswar",
+  lastName: "Praveen",
+  name: "Maheswar Praveen",
   title: "BUILDER • ROBOTICS & AI ENGINEER",
   github: "https://github.com/MaheswarPraveen",
   linkedin: "https://www.linkedin.com/in/maheswarpraveen"

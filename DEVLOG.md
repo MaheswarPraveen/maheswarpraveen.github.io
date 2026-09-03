@@ -133,3 +133,9 @@ Automated continuity log maintained by offGIT.
 - Directive: TOO MUSCH SCROLLING GAP , ATLAST IT DOESNT GIVE THAT WHITE EFFECT , AND LAST SLIDE DOESNT TURN TO 0 AND 1S. ALSO ALL THESE PARTUCLES NOW LOOKS LIKE GRAINS , NOT WAVES MAKE IT SLOW AND MAKE IT BUTTERY SMOOTH , LIKE SILLK SMOOTH. EVEN THE 0S AND 1S. TERRIBLE RIGHT NOW
 - Rationale: Directives: 1) Slash scroll gap: reduce pin duration from +=115% to +=45% for snappy slide progression. 2) Add 0s/1s swallow to the last slide (StackSlide). 3) Restore the terminal whiteout swallow flash at the very end after the final slide is swallowed. 4) Make particles look like silk waves instead of grains: larger soft particles (size: 0.12), slow stately speed (baseSpeed: 2.0), deep undulating harmonic plasma waves. 5) Make 0s and 1s transition buttery smooth with CSS easing curves and throttled flickering.
 - Updated `CONTEXT.md` (+3/-19 lines).
+
+## 2026-09-04 02:55:47 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: ITS MAHESWAR AND IN NEXT LINE PRAVEEN . OKAY?
+- Rationale: Formatting the hero name into two distinct stacked lines: 'Maheswar' on the first line and 'Praveen' on the next line.
+- Updated `CONTEXT.md` (+3/-19 lines).

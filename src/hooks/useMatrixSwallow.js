@@ -10,10 +10,9 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
     const card = cardRef.current;
     if (!card) return;
 
-    // Determine target selectors for character splitting
     let targetSelectors = '.section-title, .tag, .project-index, .section-desc';
     if (isHero) {
-      targetSelectors = '.name-title, .hero-subtitle, .clean-link';
+      targetSelectors = '.name-line, .hero-subtitle, .clean-link';
     } else if (isStack) {
       targetSelectors = '.section-title, .project-index, .stack-label, .stack-val';
     }
@@ -26,8 +25,10 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
     const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .hero-links, .clean-link, .stack-col'));
     const totalChars = chars.length;
 
+    // Cache original characters and initialize state
     chars.forEach((c) => {
       c.dataset.orig = c.textContent;
+      c._state = 0; // 0: original, 1: scrambling, 2: locked_zero, 3: swallowed
     });
 
     let charOffsets = [];
@@ -40,62 +41,62 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
 
     measureCharPositions();
 
-    // 1. SLIDE-BY-SLIDE SMOOTH FADE IN
-    let fadeInTrigger = null;
-    if (!isHero) {
-      fadeInTrigger = ScrollTrigger.create({
-        trigger: card,
-        start: "top 95%",
-        end: "top 5%",
-        scrub: 1.0,
-        onUpdate: (self) => {
-          if (self.progress < 1.0) {
-            const opacity = Math.min(1.0, self.progress * 1.5);
-            const scale = 0.96 + 0.04 * self.progress;
-            card.style.opacity = opacity.toFixed(2);
-            card.style.transform = `scale(${scale.toFixed(3)})`;
+    // ------------------------------------------------------------------------
+    // DECOUPLED SILKY RAF FLICKER (Zero layout reflow during mouse wheel scroll)
+    // ------------------------------------------------------------------------
+    let rafId;
+    let frameCount = 0;
+    function flickerLoop() {
+      rafId = requestAnimationFrame(flickerLoop);
+      frameCount++;
+      // Flip binary glyphs every 4th frame (~15Hz silky cyber cadence)
+      if (frameCount % 4 === 0) {
+        for (let i = 0; i < totalChars; i++) {
+          if (chars[i]._state === 1) {
+            chars[i].textContent = Math.random() > 0.5 ? '1' : '0';
           }
         }
-      });
+      }
     }
+    flickerLoop();
 
-    // 2. PINNED SLIDE SCRAMBLE & 3D ORBITAL SWALLOW (SNAPPY SCROLL GAP: +=45%)
-    let lastStep = -1;
-
+    // ------------------------------------------------------------------------
+    // SNAPPY PINNED SLIDE SCROLL (Zero dead gaps: +=24% duration)
+    // ------------------------------------------------------------------------
     const pinTrigger = ScrollTrigger.create({
       trigger: card,
       start: "top top",
-      end: isHero ? "+=38%" : "+=48%", // Snappy, comfortable scroll distance!
+      end: isHero ? "+=20%" : "+=26%", // Snappy, effortless slide progression!
       pin: true,
       pinSpacing: true,
-      scrub: 1.0,
+      scrub: 0.8, // Snappy 0.8s damping
       onEnter: () => measureCharPositions(),
       onEnterBack: () => measureCharPositions(),
       onUpdate: (self) => {
         const p = self.progress;
 
-        // Step quantization to eliminate wheel jitter & layout thrashing
-        const currentStep = Math.floor(p * 36);
-        if (currentStep === lastStep) return;
-        lastStep = currentStep;
-
-        // Phase 0: Solid, pristine reading state in center of viewport
-        if (p <= 0.08) {
+        // Phase 0: Solid, pristine reading state
+        if (p <= 0.05) {
+          if (card._isPris) return;
+          card._isPris = true;
           chars.forEach((c) => {
-            if (c.textContent !== c.dataset.orig) c.textContent = c.dataset.orig;
-            c.style.color = '';
-            c.style.opacity = '1';
-            c.style.transform = '';
-            c.style.textShadow = '';
+            if (c._state !== 0) {
+              c.textContent = c.dataset.orig;
+              c.style.color = '';
+              c.style.opacity = '1';
+              c.style.transform = '';
+              c.style.textShadow = '';
+              c._state = 0;
+            }
           });
           card.style.opacity = '1';
-          card.style.transform = '';
           boxes.forEach((b) => {
             b.style.opacity = '1';
             b.style.borderColor = '';
           });
           return;
         }
+        card._isPris = false;
 
         if (charOffsets.length !== totalChars) measureCharPositions();
 
@@ -103,74 +104,88 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
           ? window.__getBHScreenCoord()
           : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
 
-        chars.forEach((c, idx) => {
-          // Cascading digital wave from top-to-bottom
-          const charStart = 0.08 + (idx / totalChars) * 0.32;
-          const scrambleDuration = 0.16;
-          const holdZeroDuration = 0.14;
+        // Process characters with discrete state transitions (no continuous textContent thrashing!)
+        for (let idx = 0; idx < totalChars; idx++) {
+          const c = chars[idx];
+          const charStart = 0.05 + (idx / totalChars) * 0.30;
+          const scrambleDur = 0.16;
+          const holdZeroDur = 0.14;
 
           if (p < charStart) {
-            if (c.textContent !== c.dataset.orig) c.textContent = c.dataset.orig;
-            c.style.color = '';
-            c.style.opacity = '1';
-            c.style.transform = '';
-            c.style.textShadow = '';
-            return;
+            if (c._state !== 0) {
+              c.textContent = c.dataset.orig;
+              c.style.color = '';
+              c.style.opacity = '1';
+              c.style.transform = '';
+              c.style.textShadow = '';
+              c._state = 0;
+            }
+            continue;
           }
 
           const localProgress = p - charStart;
 
-          // PHASE A: Glitching / Scrambling into 0s and 1s with golden phosphor glow
-          if (localProgress < scrambleDuration) {
-            c.textContent = Math.random() > 0.5 ? '1' : '0';
-            c.style.color = Math.random() > 0.3 ? '#ffb030' : '#ffe480';
-            c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.6)';
-            c.style.opacity = '1';
-            c.style.transform = '';
+          // PHASE 1: Scrambling into glowing 0s and 1s
+          if (localProgress < scrambleDur) {
+            if (c._state !== 1) {
+              c.textContent = Math.random() > 0.5 ? '1' : '0';
+              c.style.color = '#ffb030';
+              c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.6)';
+              c.style.opacity = '1';
+              c.style.transform = '';
+              c._state = 1;
+            }
           }
-          // PHASE B: Locks into a solid glowing golden '0'
-          else if (localProgress < scrambleDuration + holdZeroDuration) {
-            c.textContent = '0';
-            c.style.color = '#ffa020';
-            c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.7)';
-            c.style.opacity = '1';
-            c.style.transform = '';
+          // PHASE 2: Locks into a solid glowing golden '0'
+          else if (localProgress < scrambleDur + holdZeroDur) {
+            if (c._state !== 2) {
+              c.textContent = '0';
+              c.style.color = '#ffa020';
+              c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.7)';
+              c.style.opacity = '1';
+              c.style.transform = '';
+              c._state = 2;
+            }
           }
-          // PHASE C: Detaches and gets physically swallowed into the black hole!
+          // PHASE 3: 3D Orbital Swallow into the Black Hole (GPU-only translation)
           else {
-            c.textContent = '0';
-            const swallowT = Math.min(1.0, (localProgress - scrambleDuration - holdZeroDuration) / 0.30);
-            const accel = Math.pow(swallowT, 2.2);
+            if (c._state !== 3) {
+              c.textContent = '0';
+              c._state = 3;
+            }
+
+            const swallowT = Math.min(1.0, (localProgress - scrambleDur - holdZeroDur) / 0.32);
+            const accel = Math.pow(swallowT, 2.0);
 
             const origin = charOffsets[idx] || { x: window.innerWidth * 0.25, y: window.innerHeight * 0.5 };
             const dx = bhScreen.x - origin.x;
             const dy = bhScreen.y - origin.y;
 
-            // 3D curved trajectory into event horizon
-            const swirlAngle = idx * 0.12 + accel * 3.5;
-            const swirlX = Math.sin(swirlAngle) * 25 * (1 - accel);
-            const swirlY = Math.cos(swirlAngle) * 18 * (1 - accel);
+            // Fluid 3D spiral into event horizon
+            const swirlAngle = idx * 0.10 + accel * 3.2;
+            const swirlX = Math.sin(swirlAngle) * 20 * (1 - accel);
+            const swirlY = Math.cos(swirlAngle) * 15 * (1 - accel);
 
             const curX = dx * accel + swirlX;
             const curY = dy * accel + swirlY;
-            const curZ = -accel * 550; // Plunges deep behind singularity
+            const curZ = -accel * 500;
 
-            const scaleX = 1.0 + accel * 0.4;
+            const scaleX = 1.0 + accel * 0.3;
             const scaleY = Math.max(0.1, 1.0 - accel * 0.8);
-            const rotX = accel * 55;
-            const rotZ = -accel * 18;
-            const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.5));
+            const rotX = accel * 50;
+            const rotZ = -accel * 15;
+            const remainingOpacity = Math.max(0, 1.0 - Math.pow(swallowT, 2.2));
 
             c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
             c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-            c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
+            c.style.textShadow = `0 0 ${Math.max(2, 10 * (1 - accel)).toFixed(1)}px rgba(255, 120, 20, 0.8)`;
             c.style.opacity = remainingOpacity.toFixed(2);
           }
-        });
+        }
 
-        // Pill tags, links & containers dissolve smoothly in tandem
-        const boxProgress = Math.max(0, (p - 0.45) / 0.45);
-        const boxFade = Math.max(0, 1.0 - boxProgress * 1.3);
+        // Pill tags & container fade in smooth unison
+        const boxProgress = Math.max(0, (p - 0.40) / 0.50);
+        const boxFade = Math.max(0, 1.0 - boxProgress * 1.4);
         card.style.opacity = boxFade.toFixed(2);
         boxes.forEach((b) => {
           b.style.opacity = boxFade.toFixed(2);
@@ -178,7 +193,7 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
         });
       },
       onLeave: () => {
-        chars.forEach((c) => { c.textContent = '0'; c.style.opacity = '0'; });
+        chars.forEach((c) => { c.textContent = '0'; c.style.opacity = '0'; c._state = 3; });
         card.style.opacity = '0';
       },
       onLeaveBack: () => {
@@ -188,9 +203,9 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
           c.style.opacity = '1';
           c.style.transform = '';
           c.style.textShadow = '';
+          c._state = 0;
         });
         card.style.opacity = '1';
-        card.style.transform = '';
         boxes.forEach((b) => {
           b.style.borderColor = '';
           b.style.opacity = '1';
@@ -199,7 +214,7 @@ export function useMatrixSwallow(cardRef, { isHero = false, isStack = false } = 
     });
 
     return () => {
-      if (fadeInTrigger) fadeInTrigger.kill();
+      cancelAnimationFrame(rafId);
       pinTrigger.kill();
       split.revert();
     };
