@@ -121,3 +121,9 @@ Automated continuity log maintained by offGIT.
 - Rationale: Starting local Vite server on port 8080 and capturing visual screenshots across scroll states (Hero, Project 01, Infall) to display to the user directly.
 - Updated `CONTEXT.md`, `node_modules/@babel/types/lib/validators/isReferenced.js`, `node_modules/gsap/dist/ScrollTrigger.min.js.map` (+99/-18 lines).
 - Key changes: function isReferenced(node, parent, grandparent) {; return (grandparent == null ? void 0 : grandparent.type) !== "ObjectPattern";
+
+## 2026-09-04 02:44:43 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: WHERES THE 0SAND1S EFFECT, WHERES THE SLIDE BY SLIDE FADE INS AND ITS JUST PLAIN SCROLLING LONG NOW. WTF. ALSO WHY DOESNT INITAL NAME AND ALL DOESNT HAVE 01S EFFECT TOO. COME ON
+- Rationale: Investigating why 0s and 1s effect and slide pinning didn't work in React: 1) Checking console errors (SplitType import/ESM compatibility). 2) Removing perspective from #ui-container which breaks GSAP position:fixed pinning. 3) Adding the 0s and 1s binary swallow effect to the Hero slide as requested.
+- Updated `CONTEXT.md` (+3/-20 lines).

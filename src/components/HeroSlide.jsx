@@ -1,31 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import React, { useRef } from 'react';
 import { personalInfo } from '../data/projects';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useMatrixSwallow } from '../hooks/useMatrixSwallow';
 
 export default function HeroSlide() {
   const heroRef = useRef(null);
 
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-
-    const trigger = ScrollTrigger.create({
-      trigger: el,
-      start: "top top",
-      end: "+=70%",
-      pin: true,
-      pinSpacing: true,
-      scrub: 1.0,
-      onUpdate: (self) => {
-        el.style.opacity = Math.max(0, 1.0 - self.progress * 1.5);
-      }
-    });
-
-    return () => trigger.kill();
-  }, []);
+  // Apply the 0s and 1s matrix scramble & 3D black hole swallow to the Hero slide!
+  useMatrixSwallow(heroRef, { isHero: true });
 
   return (
     <header className="card hero-card" ref={heroRef} data-offset="0">
