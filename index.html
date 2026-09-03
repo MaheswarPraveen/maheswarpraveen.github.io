@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maheswar N P — Robotics Engineer</title>
+  
+  <link rel="stylesheet" href="style.css?v=2042">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+  <script src="https://unpkg.com/split-type" defer></script>
+  <script src="blackhole.js?v=2042" defer></script>
+</head>
+<body>
+
+  <!-- WebGL Background Canvas -->
+  <canvas id="blackhole-canvas"></canvas>
+
+  <!-- Editorial Engineering Dossier UI — Pinned 100vh Slide Presentations -->
+  <div id="ui-container">
+    
+    <!-- Hero Slide (Exclusively occupies initial screen) -->
+    <header class="card hero-card" data-offset="0">
+      <h1 class="name-title">Maheswar N P</h1>
+      <p class="hero-subtitle">BUILDER • ROBOTICS &amp; AI ENGINEER</p>
+      
+      <div class="hero-links">
+        <a href="https://github.com/MaheswarPraveen" target="_blank" rel="noopener" class="clean-link">GitHub</a>
+        <a href="https://www.linkedin.com/in/maheswarpraveen" target="_blank" rel="noopener" class="clean-link">LinkedIn</a>
+      </div>
+    </header>
+
+    <!-- Slide 00: Autonomous Systems Profile -->
+    <section class="card content-card" data-offset="1">
+      <span class="project-index">00 // PROFILE</span>
+      <h2 class="section-title">Autonomous Systems Builder</h2>
+      <p class="section-desc">
+        Developing end-to-end robotics systems across <strong>ROS 2</strong>, bare-metal firmware, and edge AI accelerators. Focused on real-time motor control, kinematic trajectories, and hardware deployment.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">ROS 2</span>
+        <span class="tag">Edge AI</span>
+        <span class="tag">Embedded Systems</span>
+      </div>
+    </section>
+
+    <!-- Slide 01: SpotMicro Quadruped -->
+    <section class="card content-card" data-offset="2">
+      <span class="project-index">01 // ROBOTICS</span>
+      <h2 class="section-title">SpotMicro Quadruped</h2>
+      <p class="section-desc">
+        12-DOF quadruped robot powered by 12× DS3218 servos and an Arduino UNO Q running <strong>Zephyr RTOS</strong> for ~200Hz analytical inverse kinematics and quintic spline gaits. Custom 6.8V high-current busbar rail off a 3S LiPo to handle 20A transient bursts without brownouts.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">Zephyr RTOS</span>
+        <span class="tag">Arduino UNO Q</span>
+        <span class="tag">200Hz IK</span>
+        <span class="tag">3S LiPo Busbar</span>
+      </div>
+    </section>
+
+    <!-- Slide 02: Autonomous Skid-Steer Rover -->
+    <section class="card content-card" data-offset="3">
+      <span class="project-index">02 // FIELD AI</span>
+      <h2 class="section-title">Autonomous Skid-Steer Rover</h2>
+      <p class="section-desc">
+        Field farming rover equipped with a 4-DOF robotic manipulator for precision weed removal. Powered by <strong>ROS 2</strong> and an edge <strong>Hailo-8L NPU</strong> executing real-time YOLO vision guidance for field deployment.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">ROS 2</span>
+        <span class="tag">Hailo-8L NPU</span>
+        <span class="tag">YOLO</span>
+        <span class="tag">4-DOF Arm</span>
+      </div>
+    </section>
+
+    <!-- Slide 03: Waveshare RoArm M2-S PlayMotion -->
+    <section class="card content-card" data-offset="4">
+      <span class="project-index">03 // DRIVER ARCHITECTURE</span>
+      <h2 class="section-title">RoArm M2-S PlayMotion</h2>
+      <p class="section-desc">
+        High-precision trajectory recording and autonomous playback driver featuring dual-mode teaching (physical freedrive &amp; keyboard jogging). Streams 25Hz <strong>quintic polynomial splines</strong> for zero-jerk motion with serial noise filtering. Officially adopted into the <strong>Waveshare Wiki</strong>.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">Quintic Splines</span>
+        <span class="tag">Python Driver</span>
+        <span class="tag">Waveshare Wiki</span>
+      </div>
+    </section>
+
+    <!-- Slide 04: ArduROSPI Bridge -->
+    <section class="card content-card" data-offset="5">
+      <span class="project-index">04 // TELEMETRY BRIDGE</span>
+      <h2 class="section-title">ArduROSPI Bridge</h2>
+      <p class="section-desc">
+        Zero-dependency <strong>ROS 2 ↔ MAVLink</strong> translation layer built with pymavlink, replacing heavy MAVROS on resource-constrained Raspberry Pi rovers. Implements 10Hz IMU streaming, automatic serial reconnect, and mission mode switching.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">pymavlink</span>
+        <span class="tag">ROS 2</span>
+        <span class="tag">ArduPilot</span>
+      </div>
+    </section>
+
+    <!-- Slide 05: Kalkii Genesis -->
+    <section class="card content-card" data-offset="6">
+      <span class="project-index">05 // INTERACTIVE SYSTEMS</span>
+      <h2 class="section-title">Kalkii Genesis</h2>
+      <p class="section-desc">
+        Cyberpunk 2.5D action title solo-engineered in <strong>Godot 4</strong>. Custom hierarchical combat state machines, frame-accurate animation cancelling, dynamic 2D lighting, and responsive platformer physics controllers.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">Godot 4</span>
+        <span class="tag">Combat State Machines</span>
+        <span class="tag">GDScript</span>
+      </div>
+    </section>
+
+    <!-- Slide 06: Plant Disease Detection CNN -->
+    <section class="card content-card" data-offset="7">
+      <span class="project-index">06 // EMBEDDED VISION</span>
+      <h2 class="section-title">Plant Disease Detection CNN</h2>
+      <p class="section-desc">
+        End-to-end computer vision pipeline for agricultural crop leaf pathology. Implements OpenCV preprocessing, custom convolutional neural network (CNN) architectures in <strong>TensorFlow</strong>, achieving <strong>80% test accuracy</strong> on unseen diseased foliage datasets.
+      </p>
+      <div class="tag-cloud">
+        <span class="tag">TensorFlow</span>
+        <span class="tag">OpenCV</span>
+        <span class="tag">80% Test Accuracy</span>
+      </div>
+    </section>
+
+    <!-- Slide 07: Technical Capabilities (NO White Flash) -->
+    <section class="card content-card" data-offset="8">
+      <span class="project-index">07 // STACK</span>
+      <h2 class="section-title">Technical Capabilities</h2>
+      <div class="stack-grid">
+        <div class="stack-col">
+          <span class="stack-label">Languages &amp; AI</span>
+          <span class="stack-val">Python, C/C++, GDScript, PyTorch, TensorFlow, YOLO, OpenCV</span>
+        </div>
+        <div class="stack-col">
+          <span class="stack-label">Robotics &amp; Protocols</span>
+          <span class="stack-val">ROS 2 (Humble/Jazzy), MAVLink, CAN, UART, I2C, SPI, MQTT</span>
+        </div>
+        <div class="stack-col">
+          <span class="stack-label">Hardware &amp; Engineering</span>
+          <span class="stack-val">Hailo-8L NPU, Arduino UNO Q, Raspberry Pi, Zephyr RTOS, Fusion 360</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Smooth End Runway -->
+  <div class="scroll-end-trigger"></div>
+
+</body>
+</html>
