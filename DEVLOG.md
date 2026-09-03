@@ -235,3 +235,9 @@ Automated continuity log maintained by offGIT.
 - Directive: check C:\Users\xczma\Desktop\web
 - Rationale: The user dropped the modified files onto their Desktop. Copied App.jsx and BlackHoleCanvas.jsx from the desktop over to the project. Ran a production build, verified the new UnrealBloomPass and the throttled scramble/swallow logic. The code provided by the external LLM works flawlessly.
 - Updated `CONTEXT.md` (+3/-17 lines).
+
+## 2026-09-04 04:50:12 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: dude its changing to binary fast and its staying in binary for long . thatss still stupid
+- Rationale: Adjusted the scramble progress formula in App.jsx. The English text phase now lasts from p=0.0 to 0.40 (much longer readability). The flickering binary phase is compressed from p=0.40 to 0.55, making it a quick, purposeful transition before the solid zeroes fly into the black hole.
+- Updated `CONTEXT.md` (+3/-26 lines).
