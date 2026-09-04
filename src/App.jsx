@@ -218,7 +218,8 @@ export default function App() {
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "top 80%", 
+        // The Hero card is already at top 0 on load. If we use top 80%, it triggers instantly!
+        start: isHero ? "top top" : "top 80%", 
         end: "+=150%", // Scrubs over a much larger scroll distance
         scrub: 1.0,
         animation: tl
