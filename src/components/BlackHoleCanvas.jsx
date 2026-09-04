@@ -136,8 +136,9 @@ export default function BlackHoleCanvas() {
 
           vec4 warped = texture2D(tDiffuse, warpedUv);
           // Soft-edged void: covers bloom bleed over the mesh so the
-          // singularity stays pitch black without a hard shader boundary.
-          float disc = 1.0 - smoothstep(eh * 0.85, eh, dist);
+          // singularity stays pitch black; feathered a touch wider at the
+          // rim so the lens edge reads as transparent falloff, not a cutout.
+          float disc = 1.0 - smoothstep(eh * 0.80, eh * 1.0, dist);
           gl_FragColor = mix(warped, vec4(0.0, 0.0, 0.0, 1.0), disc);
         }
       `
@@ -179,6 +180,16 @@ export default function BlackHoleCanvas() {
     verticalHalo.position.copy(blackHolePos);
     verticalHalo.rotation.y = 0.15;
     scene.add(verticalHalo);
+
+    // Crisp photon ring hugging the void edge: sharp geometry glow that stays
+    // defined from the top-down view where bloom alone turns to mush.
+    const photonRing = new THREE.Mesh(
+      new THREE.RingGeometry(3.84, 4.06, 128),
+      new THREE.MeshBasicMaterial({ color: 0xfff3d0, side: THREE.DoubleSide, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    photonRing.position.copy(blackHolePos);
+    photonRing.rotation.x = Math.PI / 2;
+    scene.add(photonRing);
 
     // ------------------------------------------------------------------------
     // PHASE 2: GPU ACCELERATED ACCRETION DISK
@@ -521,14 +532,17 @@ export default function BlackHoleCanvas() {
       halo.scale.setScalar(1 + Math.sin(t * 1.8) * 0.015);
       outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
       verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
+      photonRing.scale.setScalar(1 + Math.sin(t * 2.2) * 0.008);
 
-      // Top-view presence: from above the disk reads thin, so push the photon
-      // rings + bloom hotter as the camera climbs. Keeps the plunge glowing.
+      // Top-view presence via crisp ring geometry, NOT blur: bloom actually
+      // drops as the camera climbs so the plunge stays sharp, while the
+      // photon ring burns to full for a defined glowing edge from above.
       const topness = Math.min(1, Math.max(0, (es.camY - 4) / 16));
       halo.material.opacity = 0.75 + topness * 0.25;
       outerRing.material.opacity = 0.4 + topness * 0.55;
       verticalHalo.material.opacity = 0.65 + topness * 0.35;
-      bloomPass.strength = 0.85 + topness * 0.6;
+      photonRing.material.opacity = 0.85 + topness * 0.15;
+      bloomPass.strength = 0.85 - topness * 0.25;
 
         // Phase 1: Update Gravitational Lensing target dynamically
         const bhWorld = new THREE.Vector3(anchorX, 0, 0);

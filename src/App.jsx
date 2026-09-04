@@ -98,6 +98,16 @@ export default function App() {
         const boxes = Array.from(card.querySelectorAll('.tag, .clean-link, .stack-col'));
         const totalChars = chars.length;
 
+        // Hero absorb: slow, backwards into 3D depth, all ones. Content
+        // cards: quicker lateral swallow in zeroes.
+        const flightDur = isHero ? 2.4 : 0.9;
+        const flightEase = isHero ? 'power1.inOut' : 'power2.in';
+        const flightGlyph = isHero ? '1' : '0';
+        const depthPush = isHero ? 1050 : 420;
+        const xyPull = isHero ? 0.62 : 1.0;
+        const staggerSpan = isHero ? 0.30 : 0.12;
+        const rotAmt = isHero ? 25 : 45;
+
         chars.forEach((c) => {
           c.dataset.orig = c.textContent;
           c._swallowState = 0;
@@ -158,7 +168,7 @@ export default function App() {
                 c._swallowState = 1;
               }
             } else if (c._swallowState !== 2) {
-              c.textContent = '0';
+              c.textContent = isHero ? '1' : '0';
               c.style.color = '#ffa020';
               c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.6)';
               c.style.opacity = '1';
@@ -182,14 +192,14 @@ export default function App() {
           measure();
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            c.textContent = '0';
+            c.textContent = flightGlyph;
             c._swallowState = 3;
           }
         });
         flightTl.to(flight, {
           t: 1.0,
-          duration: 0.9,
-          ease: "power2.in",
+          duration: flightDur,
+          ease: flightEase,
           onUpdate: () => {
             const bhScreen = window.__getBHScreenCoord
               ? window.__getBHScreenCoord()
@@ -197,25 +207,26 @@ export default function App() {
             const ft = flight.t;
             for (let idx = 0; idx < totalChars; idx++) {
               const c = chars[idx];
-              const charFlightStart = (idx / totalChars) * 0.12;
-              const prog = Math.max(0, Math.min(1.0, (ft - charFlightStart) / 0.88));
+              const charFlightStart = (idx / totalChars) * staggerSpan;
+              const prog = Math.max(0, Math.min(1.0, (ft - charFlightStart) / (1 - staggerSpan)));
               // Ease-in accel: hover, then plunge past the rim (overshoot)
               const accel = Math.pow(prog, 1.7);
               const origin = offsets[idx];
               const dx = bhScreen.x - (origin.x - window.scrollX);
               const dy = bhScreen.y - (origin.y - window.scrollY);
               // Gravitational arc: quadratic bezier toward an overshoot point
-              // 18% past the horizon, bowed perpendicular for a slingshot feel
-              const tx = dx * 1.18, ty = dy * 1.18;
-              const mx = dx * 0.5 - dy * 0.38 + Math.sin(idx * 0.35) * 60 * (1 - accel);
-              const my = dy * 0.5 + dx * 0.38 + Math.cos(idx * 0.27) * 40 * (1 - accel);
+              // past the horizon, bowed perpendicular for a slingshot feel.
+              // Hero pulls less across (xyPull) and sinks deep in Z instead.
+              const tx = dx * 1.18 * xyPull, ty = dy * 1.18 * xyPull;
+              const mx = dx * 0.5 * xyPull - dy * 0.38 + Math.sin(idx * 0.35) * 60 * (1 - accel);
+              const my = dy * 0.5 * xyPull + dx * 0.38 + Math.cos(idx * 0.27) * 40 * (1 - accel);
               const ia = 1 - accel;
-              const curX = ia * ia * 0 + 2 * ia * accel * mx + accel * accel * tx;
-              const curY = ia * ia * 0 + 2 * ia * accel * my + accel * accel * ty;
+              const curX = 2 * ia * accel * mx + accel * accel * tx;
+              const curY = 2 * ia * accel * my + accel * accel * ty;
               // Streak along travel: stretch long, crush thin near contact
               const streak = 1.0 + accel * 1.8;
               const crush = Math.max(0.05, 1.0 - Math.pow(prog, 1.5) * 0.95);
-              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${(-accel * 420).toFixed(0)}px) rotateX(${(accel * 45).toFixed(0)}deg) rotateZ(${(-accel * 25).toFixed(0)}deg) scale(${streak.toFixed(2)}, ${crush.toFixed(2)})`;
+              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${(-accel * depthPush).toFixed(0)}px) rotateX(${(accel * rotAmt).toFixed(0)}deg) rotateZ(${(-accel * 25).toFixed(0)}deg) scale(${streak.toFixed(2)}, ${crush.toFixed(2)})`;
               // Heat flare: amber -> white-hot -> ember, crash out past the rim
               const glow = Math.sin(Math.min(1, prog) * Math.PI);
               if (prog < 0.55) {
@@ -274,7 +285,12 @@ export default function App() {
         onUpdate: (self) => {
           const overlay = document.getElementById('flash-overlay');
           if (!overlay) return;
-          if (self.progress < 0.5) {
+          if (self.progress > 0.9) {
+            // Hard clamp: fully opaque black held to the very end, canvas
+            // already gone, so no scroll position can leave a trace of BH.
+            overlay.style.backgroundColor = '#000000';
+            overlay.style.opacity = '1';
+          } else if (self.progress < 0.5) {
             overlay.style.backgroundColor = '#ffffff';
             overlay.style.opacity = (self.progress / 0.5).toFixed(2);
           } else {
@@ -282,10 +298,10 @@ export default function App() {
             overlay.style.backgroundColor = '#000000';
             overlay.style.opacity = ((self.progress - 0.5) / 0.5).toFixed(2);
           }
-          // Once the blackout passes 85%, hide the WebGL canvas entirely so
+          // Once the blackout passes 80%, hide the WebGL canvas entirely so
           // no disk pixel can bleed through at the end of scroll.
           const canvas = document.getElementById('blackhole-canvas');
-          if (canvas) canvas.style.opacity = self.progress > 0.85 ? '0' : '1';
+          if (canvas) canvas.style.opacity = self.progress > 0.8 ? '0' : '1';
         }
       });
       createdTriggers.push(flashST);
