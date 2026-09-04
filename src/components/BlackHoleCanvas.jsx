@@ -94,12 +94,11 @@ export default function BlackHoleCanvas() {
     // composer.addPass(bokehPass);
 
     // Phase 1: Custom Gravitational Lensing ShaderPass
-    const lensShader = {
+    const LensingShader = {
       uniforms: {
         tDiffuse: { value: null },
         bhPos: { value: new THREE.Vector2(0.5, 0.5) },
-        radius: { value: 0.25 }, // Slightly wider area of effect
-        amount: { value: 0.15 }  // Drastically reduced from 1.8 to stop squishing the singularity
+        strength: { value: 0.0002 } // Drastically reduced from 0.0015 to stop shrinking the singularity
       },
       vertexShader: `
         varying vec2 vUv;
