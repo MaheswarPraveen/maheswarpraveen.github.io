@@ -84,22 +84,16 @@ export default function BlackHoleCanvas() {
     composer.addPass(bloomPass);
 
     // Phase 1: Depth of Field (BokehPass)
-    const bokehPass = new BokehPass(scene, camera, {
-      focus: 15.0, // Distance to the black hole
-      aperture: 0.00001,
-      maxblur: 0.008,
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-    composer.addPass(bokehPass);
+    // Disabled temporarily: BokehPass requires precise per-frame 'focus' uniform updates 
+    // linked to camera depth, otherwise it blurs the entire scene into mush.
+    // composer.addPass(bokehPass);
 
     // Phase 1: Custom Gravitational Lensing ShaderPass
     const LensingShader = {
       uniforms: {
         tDiffuse: { value: null },
         bhPos: { value: new THREE.Vector2(0.5, 0.5) },
-        radius: { value: 0.25 },
-        strength: { value: 0.08 }
+        strength: { value: 0.0015 } // Reduced to keep it elegant
       },
       vertexShader: `
         varying vec2 vUv;
@@ -111,30 +105,35 @@ export default function BlackHoleCanvas() {
       fragmentShader: `
         uniform sampler2D tDiffuse;
         uniform vec2 bhPos;
-        uniform float radius;
         uniform float strength;
         varying vec2 vUv;
 
         void main() {
           vec2 dir = vUv - bhPos;
           // Compensate for aspect ratio roughly if needed, assuming 16:9 for distance
-          // dir.x *= 1.77; 
+          dir.x *= 1.77; 
           float dist = length(dir);
           vec2 warpedUv = vUv;
           
-          float eh = 0.06; // Event horizon radius in screen space
+          float eh = 0.045; // Event horizon radius in screen space
           
-          if (dist > eh && dist < radius) {
+          if (dist > eh) {
             // Inverse square falloff for gravitational warping
-            float warp = strength / (dist * dist);
-            warp = clamp(warp, 0.0, 0.5); // Prevent extreme tearing
-            warpedUv -= normalize(dir) * warp;
+            float warp = strength / (dist * dist + 0.001); 
+            warp = clamp(warp, 0.0, 0.05); // strict clamp to prevent tearing
+            
+            // Smoothly decay the warp to 0 at a distance of 0.35 to prevent hard edges
+            float edgeFade = smoothstep(0.35, 0.1, dist);
+            warp *= edgeFade;
+            
+            // Warp towards the black hole
+            vec2 trueDir = vUv - bhPos;
+            warpedUv -= normalize(trueDir) * warp;
+            
             gl_FragColor = texture2D(tDiffuse, warpedUv);
-          } else if (dist <= eh) {
+          } else {
             // Ensure the inside of the event horizon is pitch black
             gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-          } else {
-            gl_FragColor = texture2D(tDiffuse, vUv);
           }
         }
       `
