@@ -58,7 +58,8 @@ export default function BlackHoleCanvas() {
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    // OPTIMIZATION: Cap Pixel Ratio to 1.0 (Retina 2.0+ displays cause 4x pixel overhead)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
 
     // Phase 1: ACES Filmic Tone Mapping
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -76,8 +77,11 @@ export default function BlackHoleCanvas() {
     );
     const composer = new EffectComposer(renderer, renderTarget);
     composer.addPass(new RenderPass(scene, camera));
+    
+    // OPTIMIZATION: Downsample the Bloom pass by feeding it half the screen resolution.
+    // It creates the same soft glow but processes 4x fewer pixels internally.
     const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2),
       0.85,  // strength
       0.55,  // radius
       0.15   // threshold
@@ -150,7 +154,7 @@ export default function BlackHoleCanvas() {
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     singularity.position.copy(blackHolePos);
-    singularity.scale.setScalar(1.25); // Only scale the black void
+    singularity.scale.setScalar(1.4); // Made black spot larger
     scene.add(singularity);
 
     const halo = new THREE.Mesh(
@@ -159,7 +163,6 @@ export default function BlackHoleCanvas() {
     );
     halo.position.copy(blackHolePos);
     halo.rotation.x = Math.PI / 2;
-    // Removed scale to keep glowing ring original size
     scene.add(halo);
 
     const outerRing = new THREE.Mesh(
@@ -168,7 +171,6 @@ export default function BlackHoleCanvas() {
     );
     outerRing.position.copy(blackHolePos);
     outerRing.rotation.x = Math.PI / 2;
-    // Removed scale
     scene.add(outerRing);
 
     const verticalHalo = new THREE.Mesh(
@@ -177,7 +179,6 @@ export default function BlackHoleCanvas() {
     );
     verticalHalo.position.copy(blackHolePos);
     verticalHalo.rotation.y = 0.15;
-    // Removed scale
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
@@ -202,7 +203,7 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 2.1 + rN * 12.5; // Scaled to match 1.25x singularity
+      const r = 2.31 + rN * 12.5; // Scaled up to match 1.4x singularity
       radii[i] = r;
 
       // Even slower Keplerian drift to prevent the "blender" look

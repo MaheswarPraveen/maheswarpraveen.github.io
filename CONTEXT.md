@@ -1,12 +1,12 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 11:19:59
+**Last Synced:** 2026-09-04 15:05:52
 
 ## Current Focus & Active State
 
 - Directive: the verical is only happening at end and in a terrible way, everythibng is still laggyy, the binary only swallowed by black hole at too top and its alggy choopy and not ina smooth way.nothing is smooth. finds most effective and effienicent way to fix it with breaking any current creativity code, also the black spot inside hole is small adf
 - Rationale: Diagnosis: 1) Lag: The CPU was calculating Math.sin/Math.cos and updating BufferAttribute buffers 14,000 times every frame. 2) Swallow timing: Text flying 'too top' because the user was actively scrolling it up while it animated. 3) Small black spot: The MeshBasicMaterial singularity sphere was only 1.65 radius. Fix: EXECUTED PHASE 2. Moved all 14,000 particles to a custom WebGL ShaderMaterial. CPU loop is completely gone (O(1) uniform updates), fixing all lag. Scaled the singularity meshes by 1.4x to make the black spot significantly larger. Sped up the text swallow animation to 0.8s so it happens rapidly before the scroll can drag it out of frame.
-- Updated `CONTEXT.md`, `src/components/BlackHoleCanvas.jsx`, `src/styles/index.css` (+8/-23 lines).
+- Applied workspace modifications (+0/-13 lines).
 
 ## Recent Context Stream
 
