@@ -392,3 +392,9 @@ Automated continuity log maintained by offGIT.
 - Directive: also theres less particles from screen pov coming into black hole and let black hole wave be relative speed like particles at outter faster than moving towards singularity. also approved implementation plan
 - Rationale: Execution of implementation plan 1, 2, and 3. Integrated Lenis for robust smooth scrolling tied to GSAP ticker. Widened the letter-to-binary scramble threshold and physical scrub distance to slow down the effect. Replaced character-by-character noisy reveals with masked line-by-line stagger reveals for long text. Finally, addressed the added requirements: adjusted particle distribution (Math.pow 2.0) to pack density near the black hole, and inverted the Keplerian orbital velocity math so outer particles orbit faster.
 - Applied workspace modifications (+0/-9 lines).
+
+## 2026-09-04 16:49:56 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: well good thing, you still didnt fixed scroll and its still messed uup, thanks for wasting my credits
+- Rationale: The user reports that scrolling is still not fixed and completely messed up. Inspecting App.jsx and index.css to understand how Lenis, ScrollTrigger, body overflow, and CSS are interacting, why it is jittery or broken, and fixing the exact root cause without breaking layout.
+- Updated `CONTEXT.md` (+3/-17 lines).
