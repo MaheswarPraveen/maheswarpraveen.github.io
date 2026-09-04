@@ -36,18 +36,60 @@ export default function App() {
     const splits = [];
 
     cards.forEach((card, cIdx) => {
-      const isHero = cIdx === 0;
-      const isStack = cIdx === cards.length - 1;
+      // 1. Separate long text elements from short ones
+      const isHero = card.classList.contains('hero-card');
+      const isStack = card.querySelector('.stack-grid');
 
-      let selectors = '.section-title, .tag, .project-index, .section-desc';
-      if (isHero) selectors = '.name-line, .hero-subtitle, .clean-link';
-      else if (isStack) selectors = '.section-title, .project-index, .stack-label, .stack-val';
+      // Short elements get the binary scramble + flight
+      let shortSelectors = '.project-index, .tag';
+      if (isHero) shortSelectors = '.name-line, .hero-subtitle, .clean-link';
+      else if (isStack) shortSelectors = '.project-index, .stack-label, .stack-val';
 
-      const split = new SplitType(card.querySelectorAll(selectors), { types: 'chars' });
-      splits.push(split);
+      const shortSplit = new SplitType(card.querySelectorAll(shortSelectors), { types: 'chars' });
+      splits.push(shortSplit);
+
+      // Long elements get the clean masked line reveal
+      let longSelectors = '.section-title, .section-desc';
+      if (isStack) longSelectors = '.section-title';
+      else if (isHero) longSelectors = ''; // Hero has no long text
+      
+      if (longSelectors) {
+        const longElements = card.querySelectorAll(longSelectors);
+        if (longElements.length > 0) {
+          const longSplit = new SplitType(longElements, { types: 'lines' });
+          splits.push(longSplit);
+
+          // Wrap each line in an overflow: hidden container for the mask effect
+          longSplit.lines.forEach(line => {
+            const wrapper = document.createElement('div');
+            wrapper.style.overflow = 'hidden';
+            wrapper.style.display = 'block'; // Ensure the wrapper takes up space
+            wrapper.style.verticalAlign = 'top';
+            line.parentNode.insertBefore(wrapper, line);
+            wrapper.appendChild(line);
+          });
+
+          // Create a single ScrollTrigger to play the line reveal once
+          gsap.fromTo(longSplit.lines, 
+            { y: '110%', opacity: 0 },
+            {
+              y: '0%',
+              opacity: 1,
+              duration: 1.0,
+              stagger: 0.08,
+              ease: "power4.out",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 85%",
+                toggleActions: "play none none none" // Play once, no scrub
+              }
+            }
+          );
+        }
+      }
 
       const chars = Array.from(card.querySelectorAll('.char'));
-      const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .clean-link, .stack-col'));
+      const boxes = Array.from(card.querySelectorAll('.tag, .clean-link, .stack-col'));
       const totalChars = chars.length;
 
       // 1. Measure origins absolutely (including initial scroll)
@@ -85,8 +127,8 @@ export default function App() {
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 });
 
-          // Phase 1 (0.0 - 0.25): Organic staggered matrix decode
-          // Phase 2 (0.25 - 1.0): Dynamic flight to BH (even while scrolling!)
+          // Phase 1 (0.0 - 0.45): Organic staggered matrix decode
+          // Phase 2 (0.45 - 1.0): Dynamic flight to BH (even while scrolling!)
 
           const now = performance.now();
 
@@ -102,7 +144,7 @@ export default function App() {
                 c.style.textShadow = 'none';
                 c._swallowState = 0;
               }
-            } else if (p > 0 && p < 0.25) {
+            } else if (p > 0 && p < 0.45) {
               // Staggered, organic flicker
               if (now - c._lastFlip > 40 + (idx % 7) * 15) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
@@ -117,7 +159,7 @@ export default function App() {
               }
             } else {
               // Flight
-              const flightT = (p - 0.25) / 0.75; 
+              const flightT = (p - 0.45) / 0.55; 
               const charFlightStart = (idx / totalChars) * 0.2;
               const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.8));
               const accel = Math.pow(progressInFlight, 2.2);
@@ -159,11 +201,11 @@ export default function App() {
             }
           }
 
-          if (p < 0.25) {
+          if (p < 0.45) {
              boxes.forEach(b => b.style.opacity = '1');
              card.style.opacity = '1';
           } else {
-             const flightT = (p - 0.25) / 0.75;
+             const flightT = (p - 0.45) / 0.55;
              const boxFade = Math.max(0, 1.0 - Math.pow(flightT, 1.5));
              boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
              card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.5)).toFixed(2);
@@ -176,9 +218,9 @@ export default function App() {
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "top top", 
-        end: "bottom top", // Scrubs perfectly as the card scrolls out of view
-        scrub: 0.5,
+        start: "top 80%", 
+        end: "+=150%", // Scrubs over a much larger scroll distance
+        scrub: 1.0,
         animation: tl
       });
     });
@@ -207,6 +249,8 @@ export default function App() {
     return () => {
       splits.forEach((s) => s.revert());
       ScrollTrigger.getAll().forEach((t) => t.kill());
+      lenis.destroy();
+      gsap.ticker.remove(lenis.raf);
     };
   }, []);
 

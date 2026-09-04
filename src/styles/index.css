@@ -73,7 +73,7 @@ body {
 /* Re-enable pointer events ONLY on the actual content cards */
 .card {
   pointer-events: auto;
-  scroll-snap-align: center;
+  
 }
 
 
@@ -88,7 +88,7 @@ body {
   justify-content: center;
   z-index: 10;
   max-width: 600px;
-  scroll-snap-align: center;
+  
   perspective: 1200px;
   perspective-origin: 65% 50%;
   transform-style: preserve-3d;
