@@ -56,7 +56,7 @@ export default function BlackHoleCanvas() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, stencil: false, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     // OPTIMIZATION: Cap Pixel Ratio to 1.0 (Retina 2.0+ displays cause 4x pixel overhead)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));

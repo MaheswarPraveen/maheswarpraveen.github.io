@@ -66,7 +66,9 @@ export default function App() {
         if (longSelectors) {
           const longElements = card.querySelectorAll(longSelectors);
           if (longElements.length > 0) {
-            const longSplit = new SplitType(longElements, { types: 'lines' });
+            // Split lines AND chars so titles/descs get a clean line reveal on
+            // enter AND still participate in the binary swallow on exit.
+            const longSplit = new SplitType(longElements, { types: 'lines, chars' });
             splits.push(longSplit);
 
             // Clean masked line reveal: triggers as card enters
@@ -107,109 +109,104 @@ export default function App() {
         });
 
         // ----------------------------------------------------------------------
-        // CINEMATIC TIMELINE: Follows scroll to swallow into black hole
+        // TWO-STAGE SWALLOW: scroll-driven scramble, then autonomous flight.
+        // p 0.00-0.40: readable English. 0.40-0.55: binary flicker.
+        // p >= 0.58: autonomous flight tween finishes even with hands off.
+        // Scroll back below 0.50 reverses everything.
         // ----------------------------------------------------------------------
         const anim = { phase: 0 };
         const tl = gsap.timeline({ paused: true });
-        let capturedBH = null;
+        let flightTween = null;
 
-        tl.eventCallback('onStart', () => {
-          capturedBH = window.__getBHScreenCoord
+        const renderPhase = (p) => {
+          // Live BH coords every tick: camera dollies during scroll, so a
+          // captured-once value sends chars the wrong way (up-left bug).
+          const bhScreen = window.__getBHScreenCoord
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
-        });
+
+          const now = performance.now();
+
+          for (let idx = 0; idx < totalChars; idx++) {
+            const c = chars[idx];
+
+            if (p <= 0.40) {
+              if (c._swallowState !== 0) {
+                c.textContent = c.dataset.orig;
+                c.style.color = '';
+                c.style.opacity = '1';
+                c.style.transform = 'none';
+                c.style.textShadow = 'none';
+                c._swallowState = 0;
+              }
+            } else if (p < 0.55) {
+              // Synchronous flicker: all letters flip together, throttled.
+              if (now - c._lastFlip > 90) {
+                c.textContent = Math.random() > 0.5 ? '1' : '0';
+                c._lastFlip = now;
+              }
+              if (c._swallowState !== 1) {
+                c.style.color = '#ffaa20'; // Bright amber
+                c.style.textShadow = '0 0 12px rgba(255, 170, 32, 0.8)';
+                c.style.opacity = '1';
+                c.style.transform = 'none';
+                c._swallowState = 1;
+              }
+            } else {
+              // Flight toward live BH position
+              const flightT = (p - 0.55) / 0.45;
+              const charFlightStart = (idx / totalChars) * 0.15;
+              const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.85));
+              const accel = Math.pow(progressInFlight, 2.0);
+
+              const origin = offsets[idx];
+              const currentScreenX = origin.x - window.scrollX;
+              const currentScreenY = origin.y - window.scrollY;
+
+              const dx = bhScreen.x - currentScreenX;
+              const dy = bhScreen.y - currentScreenY;
+
+              const swirlAngle = idx * 0.12 + accel * 3.0;
+              const swirlX = Math.sin(swirlAngle) * 18 * (1 - accel);
+              const swirlY = Math.cos(swirlAngle) * 12 * (1 - accel);
+
+              const curX = dx * accel + swirlX;
+              const curY = dy * accel + swirlY;
+              const curZ = -accel * 350;
+
+              const scaleX = 1.0 + accel * 0.3;
+              const scaleY = Math.max(0.1, 1.0 - accel * 0.8);
+              const rotX = accel * 35;
+              const rotZ = -accel * 12;
+              const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.2));
+
+              c.textContent = '0';
+
+              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
+
+              c.style.color = accel < 0.6 ? '#ff9010' : '#ff2000';
+              c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(0)}px rgba(255, 120, 20, 0.9)`;
+              c.style.opacity = remainingOpacity.toFixed(2);
+              c._swallowState = 3;
+            }
+          }
+
+          if (p < 0.55) {
+            boxes.forEach(b => b.style.opacity = '1');
+            card.style.opacity = '1';
+          } else {
+            const flightT = (p - 0.55) / 0.45;
+            const boxFade = Math.max(0, 1.0 - Math.pow(flightT, 1.5));
+            boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
+            card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.2)).toFixed(2);
+          }
+        };
 
         tl.to(anim, {
           phase: 1.0,
           duration: 1.0,
           ease: "power1.inOut",
-          onUpdate: () => {
-            const p = anim.phase;
-            const bhScreen = capturedBH || (window.__getBHScreenCoord
-              ? window.__getBHScreenCoord()
-              : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 });
-
-            // Phase 1 (0.0 - 0.15): Organic staggered matrix decode
-            // Phase 2 (0.15 - 1.0): Dynamic flight to BH
-            const now = performance.now();
-
-            for (let idx = 0; idx < totalChars; idx++) {
-              const c = chars[idx];
-
-              if (p === 0) {
-                if (c._swallowState !== 0) {
-                  c.textContent = c.dataset.orig;
-                  c.style.color = '';
-                  c.style.opacity = '1';
-                  c.style.transform = 'none';
-                  c.style.textShadow = 'none';
-                  c._swallowState = 0;
-                }
-              } else if (p > 0 && p < 0.15) {
-                // Staggered, organic flicker
-                if (now - c._lastFlip > 40 + (idx % 7) * 15) {
-                  c.textContent = Math.random() > 0.5 ? '1' : '0';
-                  c._lastFlip = now;
-                }
-                if (c._swallowState !== 1) {
-                  c.style.color = '#ffaa20'; // Bright amber
-                  c.style.textShadow = '0 0 12px rgba(255, 170, 32, 0.8)';
-                  c.style.opacity = '1';
-                  c.style.transform = 'none';
-                  c._swallowState = 1;
-                }
-              } else {
-                // Flight
-                const flightT = (p - 0.15) / 0.85; 
-                const charFlightStart = (idx / totalChars) * 0.2;
-                const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.8));
-                const accel = Math.pow(progressInFlight, 2.2);
-
-                const origin = offsets[idx];
-                const currentScreenX = origin.x - window.scrollX;
-                const currentScreenY = origin.y - window.scrollY;
-                
-                const dx = bhScreen.x - currentScreenX;
-                const dy = bhScreen.y - currentScreenY;
-
-                const swirlAngle = idx * 0.15 + accel * 4.0;
-                const swirlX = Math.sin(swirlAngle) * 30 * (1 - accel);
-                const swirlY = Math.cos(swirlAngle) * 20 * (1 - accel);
-
-                const curX = dx * accel + swirlX;
-                const curY = dy * accel + swirlY;
-                const curZ = -accel * 600;
-
-                const scaleX = 1.0 + accel * 0.5;
-                const scaleY = Math.max(0.05, 1.0 - accel * 0.9);
-                const rotX = accel * 60;
-                const rotZ = -accel * 20;
-                const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.5));
-
-                if (c._swallowState !== 3) {
-                   c.textContent = Math.random() > 0.5 ? '1' : '0';
-                }
-                
-                c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
-                
-                const shadowStep = Math.round((1 - accel) * 4) / 4;
-                c.style.color = accel < 0.6 ? '#ff9010' : '#ff2000';
-                c.style.textShadow = `0 0 ${Math.max(2, 15 * shadowStep).toFixed(0)}px rgba(255, 120, 20, 0.9)`;
-                c.style.opacity = remainingOpacity.toFixed(2);
-                c._swallowState = 3;
-              }
-            }
-
-            if (p < 0.15) {
-               boxes.forEach(b => b.style.opacity = '1');
-               card.style.opacity = '1';
-            } else {
-               const flightT = (p - 0.15) / 0.85;
-               const boxFade = Math.max(0, 1.0 - Math.pow(flightT, 1.5));
-               boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
-               card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.5)).toFixed(2);
-            }
-          }
+          onUpdate: () => renderPhase(anim.phase)
         });
 
         // ----------------------------------------------------------------------
@@ -219,10 +216,27 @@ export default function App() {
         // ----------------------------------------------------------------------
         const cardST = ScrollTrigger.create({
           trigger: card,
-          start: isHero ? "top top" : "top 22%", 
-          end: isHero ? "+=75%" : "+=65%",
-          scrub: 0.4,
-          animation: tl
+          start: isHero ? "top top" : "top 25%",
+          end: isHero ? "+=70%" : "+=60%",
+          scrub: 0.6,
+          animation: tl,
+          onUpdate: (self) => {
+            // Auto-finish: once past binary, complete flight hands-off.
+            // Killed automatically when scrolling back below 0.50.
+            if (self.progress >= 0.62 && tl.progress() < 1) {
+              if (!flightTween || !flightTween.isActive()) {
+                flightTween = gsap.to(tl, {
+                  progress: 1,
+                  duration: 0.7,
+                  ease: "power2.in",
+                  overwrite: "auto"
+                });
+              }
+            } else if (self.progress < 0.50 && flightTween) {
+              flightTween.kill();
+              flightTween = null;
+            }
+          }
         });
         createdTriggers.push(cardST);
       });
@@ -236,12 +250,13 @@ export default function App() {
         onUpdate: (self) => {
           const overlay = document.getElementById('flash-overlay');
           if (!overlay) return;
-          overlay.style.backgroundColor = '#ffffff';
-          
           if (self.progress < 0.5) {
+            overlay.style.backgroundColor = '#ffffff';
             overlay.style.opacity = (self.progress / 0.5).toFixed(2);
           } else {
-            overlay.style.opacity = (1.0 - ((self.progress - 0.5) / 0.5)).toFixed(2);
+            // Second half fades to pure black so no BH traces remain.
+            overlay.style.backgroundColor = '#000000';
+            overlay.style.opacity = ((self.progress - 0.5) / 0.5).toFixed(2);
           }
         }
       });
