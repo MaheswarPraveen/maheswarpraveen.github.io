@@ -3879,27 +3879,25 @@ void main() {
           float dist = length(dir);
           vec2 warpedUv = vUv;
           
-          float eh = 0.045; // Event horizon radius in screen space
+          float eh = 0.052; // Matched to singularity scale 1.9
           
-          if (dist > eh) {
-            // Inverse square falloff for gravitational warping
-            float warp = strength / (dist * dist + 0.001); 
-            warp = clamp(warp, 0.0, 0.05); // strict clamp to prevent tearing
-            
-            // Smoothly decay the warp to 0 at a distance of 0.35 to prevent hard edges
-            float edgeFade = smoothstep(0.35, 0.1, dist);
-            warp *= edgeFade;
-            
-            // Warp towards the black hole
-            vec2 trueDir = vUv - bhPos;
-            warpedUv -= normalize(trueDir) * warp;
-            
-            gl_FragColor = texture2D(tDiffuse, warpedUv);
-          } else {
-            // No hard black disc in post: let the real singularity mesh define
-            // the void so lensing never shrinks the BH or pushes disk outward.
-            gl_FragColor = texture2D(tDiffuse, warpedUv);
-          }
+          // Inverse square falloff for gravitational warping (outside only)
+          float warp = strength / (dist * dist + 0.001);
+          warp = clamp(warp, 0.0, 0.05); // strict clamp to prevent tearing
+
+          // Smoothly decay the warp to 0 at a distance of 0.35 to prevent hard edges
+          float edgeFade = smoothstep(0.35, 0.1, dist);
+          warp *= edgeFade;
+
+          // Warp towards the black hole
+          vec2 trueDir = vUv - bhPos;
+          warpedUv -= normalize(trueDir + vec2(1e-5)) * warp;
+
+          vec4 warped = texture2D(tDiffuse, warpedUv);
+          // Soft-edged void: covers bloom bleed over the mesh so the
+          // singularity stays pitch black without a hard shader boundary.
+          float disc = 1.0 - smoothstep(eh * 0.85, eh, dist);
+          gl_FragColor = mix(warped, vec4(0.0, 0.0, 0.0, 1.0), disc);
         }
       `},p=new MT(d);c.addPass(p);const _=new wi(new __(1.65,64,64),new vo({color:0}));_.position.copy(s),_.scale.setScalar(1.9),o.add(_);const g=new wi(new hu(1.65,2.05,80),new vo({color:16752704,side:Vi,transparent:!0,opacity:.75,blending:ps}));g.position.copy(s),g.rotation.x=Math.PI/2,o.add(g);const m=new wi(new hu(2.05,2.35,80),new vo({color:16733440,side:Vi,transparent:!0,opacity:.4,blending:ps}));m.position.copy(s),m.rotation.x=Math.PI/2,o.add(m);const h=new wi(new hu(1.65,1.95,80),new vo({color:16755264,side:Vi,transparent:!0,opacity:.65,blending:ps}));h.position.copy(s),h.rotation.y=.15,o.add(h);const v=11e3,x=new Li,y=new Float32Array(v*3),T=new Float32Array(v*3),w=new Float32Array(v),M=new Float32Array(v),P=new Float32Array(v),S=new ot(16775406),E=new ot(16737792),I=new ot(7798784),D=new ot;for(let A=0;A<v;A++){const z=Math.pow(Math.random(),2),J=3.14+z*9.5;M[A]=J,P[A]=.007/Math.sqrt(J);const ee=Math.random()*Math.PI*2;w[A]=ee,y[A*3]=r+Math.cos(ee)*J,y[A*3+1]=(Math.random()-.5)*(.15+z*.3),y[A*3+2]=Math.sin(ee)*J,D.lerpColors(S,E,Math.min(1,J/8)),D.lerp(I,Math.max(0,(J-8)/20)),D.toArray(T,A*3)}x.setAttribute("position",new Cn(y,3)),x.setAttribute("customColor",new Cn(T,3)),x.setAttribute("angle",new Cn(w,1)),x.setAttribute("radius",new Cn(M,1)),x.setAttribute("speed",new Cn(P,1));const K={uTime:{value:0},uSpeed:{value:1},uAnchor:{value:new X(r,0,0)},uMouseTarget:{value:new X(9999,0,9999)},uHoverStrength:{value:0}},L=new ei({uniforms:K,vertexShader:`
         uniform float uTime;

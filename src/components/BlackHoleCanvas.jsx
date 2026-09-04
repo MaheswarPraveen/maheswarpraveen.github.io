@@ -120,27 +120,25 @@ export default function BlackHoleCanvas() {
           float dist = length(dir);
           vec2 warpedUv = vUv;
           
-          float eh = 0.045; // Event horizon radius in screen space
+          float eh = 0.052; // Matched to singularity scale 1.9
           
-          if (dist > eh) {
-            // Inverse square falloff for gravitational warping
-            float warp = strength / (dist * dist + 0.001); 
-            warp = clamp(warp, 0.0, 0.05); // strict clamp to prevent tearing
-            
-            // Smoothly decay the warp to 0 at a distance of 0.35 to prevent hard edges
-            float edgeFade = smoothstep(0.35, 0.1, dist);
-            warp *= edgeFade;
-            
-            // Warp towards the black hole
-            vec2 trueDir = vUv - bhPos;
-            warpedUv -= normalize(trueDir) * warp;
-            
-            gl_FragColor = texture2D(tDiffuse, warpedUv);
-          } else {
-            // No hard black disc in post: let the real singularity mesh define
-            // the void so lensing never shrinks the BH or pushes disk outward.
-            gl_FragColor = texture2D(tDiffuse, warpedUv);
-          }
+          // Inverse square falloff for gravitational warping (outside only)
+          float warp = strength / (dist * dist + 0.001);
+          warp = clamp(warp, 0.0, 0.05); // strict clamp to prevent tearing
+
+          // Smoothly decay the warp to 0 at a distance of 0.35 to prevent hard edges
+          float edgeFade = smoothstep(0.35, 0.1, dist);
+          warp *= edgeFade;
+
+          // Warp towards the black hole
+          vec2 trueDir = vUv - bhPos;
+          warpedUv -= normalize(trueDir + vec2(1e-5)) * warp;
+
+          vec4 warped = texture2D(tDiffuse, warpedUv);
+          // Soft-edged void: covers bloom bleed over the mesh so the
+          // singularity stays pitch black without a hard shader boundary.
+          float disc = 1.0 - smoothstep(eh * 0.85, eh, dist);
+          gl_FragColor = mix(warped, vec4(0.0, 0.0, 0.0, 1.0), disc);
         }
       `
     };
