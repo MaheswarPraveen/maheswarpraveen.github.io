@@ -262,6 +262,20 @@ html.lenis, html.lenis body {
   will-change: transform, opacity;
 }
 
+/* SplitType line/word wrappers: block lines keep layout identical to the
+   un-split paragraph; nowrap words stop mid-word breaks. No overflow:hidden
+   here — the reveal masks via clip-path so flying chars are never clipped. */
+.line {
+  display: block;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  will-change: transform, opacity;
+}
+
+.word {
+  white-space: nowrap;
+}
+
 /* End-of-Page Scroll Runway */
 .scroll-end-trigger {
   height: 30vh;

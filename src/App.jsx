@@ -68,7 +68,8 @@ export default function App() {
           if (longElements.length > 0) {
             // Split lines AND chars so titles/descs get a clean line reveal on
             // enter AND still participate in the binary swallow on exit.
-            const longSplit = new SplitType(longElements, { types: 'lines, chars' });
+            // Words included so wrapping never breaks mid-word.
+            const longSplit = new SplitType(longElements, { types: 'lines, words, chars' });
             splits.push(longSplit);
 
             // Clean masked line reveal: triggers as card enters
@@ -96,41 +97,45 @@ export default function App() {
         const boxes = Array.from(card.querySelectorAll('.tag, .clean-link, .stack-col'));
         const totalChars = chars.length;
 
-        // 1. Measure origins absolutely (including initial scroll)
-        const offsets = chars.map((c) => {
+        chars.forEach((c) => {
           c.dataset.orig = c.textContent;
           c._swallowState = 0;
-          c._lastFlip = Math.random() * 100; // stagger initial flip
-          const rect = c.getBoundingClientRect();
-          return { 
-            x: rect.left + window.scrollX, 
-            y: rect.top + window.scrollY 
-          };
+          c._lastFlip = Math.random() * 100;
         });
 
-        // ----------------------------------------------------------------------
-        // TWO-STAGE SWALLOW: scroll-driven scramble, then autonomous flight.
-        // p 0.00-0.40: readable English. 0.40-0.55: binary flicker.
-        // p >= 0.58: autonomous flight tween finishes even with hands off.
-        // Scroll back below 0.50 reverses everything.
-        // ----------------------------------------------------------------------
-        const anim = { phase: 0 };
-        const tl = gsap.timeline({ paused: true });
-        let flightTween = null;
+        // Origins measured lazily at flight start (after the line reveal has
+        // settled), never at setup while lines still sit at y:30.
+        let offsets = null;
+        const measure = () => {
+          offsets = chars.map((c) => {
+            const rect = c.getBoundingClientRect();
+            return { x: rect.left + window.scrollX, y: rect.top + window.scrollY };
+          });
+        };
 
-        const renderPhase = (p) => {
-          // Live BH coords every tick: camera dollies during scroll, so a
-          // captured-once value sends chars the wrong way (up-left bug).
-          const bhScreen = window.__getBHScreenCoord
-            ? window.__getBHScreenCoord()
-            : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
-
-          const now = performance.now();
-
+        const resetChars = () => {
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
+            if (c._swallowState !== 0) {
+              c.textContent = c.dataset.orig;
+              c.style.color = '';
+              c.style.opacity = '1';
+              c.style.transform = 'none';
+              c.style.textShadow = 'none';
+              c._swallowState = 0;
+            }
+          }
+          boxes.forEach(b => b.style.opacity = '1');
+          card.style.opacity = '1';
+        };
 
-            if (p <= 0.40) {
+        // Cheap scroll-driven scramble: state-change writes only, text swaps
+        // throttled. No transforms here, so no per-tick layout thrash.
+        const renderScramble = (p) => {
+          const now = performance.now();
+          for (let idx = 0; idx < totalChars; idx++) {
+            const c = chars[idx];
+            if (p < 0.50) {
               if (c._swallowState !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
@@ -139,106 +144,105 @@ export default function App() {
                 c.style.textShadow = 'none';
                 c._swallowState = 0;
               }
-            } else if (p < 0.55) {
-              // Synchronous flicker: all letters flip together, throttled.
+            } else if (p < 0.75) {
               if (now - c._lastFlip > 90) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
                 c._lastFlip = now;
               }
               if (c._swallowState !== 1) {
-                c.style.color = '#ffaa20'; // Bright amber
+                c.style.color = '#ffaa20';
                 c.style.textShadow = '0 0 12px rgba(255, 170, 32, 0.8)';
                 c.style.opacity = '1';
                 c.style.transform = 'none';
                 c._swallowState = 1;
               }
-            } else {
-              // Flight toward live BH position
-              const flightT = (p - 0.55) / 0.45;
-              const charFlightStart = (idx / totalChars) * 0.15;
-              const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.85));
-              const accel = Math.pow(progressInFlight, 2.0);
-
-              const origin = offsets[idx];
-              const currentScreenX = origin.x - window.scrollX;
-              const currentScreenY = origin.y - window.scrollY;
-
-              const dx = bhScreen.x - currentScreenX;
-              const dy = bhScreen.y - currentScreenY;
-
-              const swirlAngle = idx * 0.12 + accel * 3.0;
-              const swirlX = Math.sin(swirlAngle) * 18 * (1 - accel);
-              const swirlY = Math.cos(swirlAngle) * 12 * (1 - accel);
-
-              const curX = dx * accel + swirlX;
-              const curY = dy * accel + swirlY;
-              const curZ = -accel * 350;
-
-              const scaleX = 1.0 + accel * 0.3;
-              const scaleY = Math.max(0.1, 1.0 - accel * 0.8);
-              const rotX = accel * 35;
-              const rotZ = -accel * 12;
-              const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.2));
-
+            } else if (c._swallowState !== 2) {
               c.textContent = '0';
-
-              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
-
-              c.style.color = accel < 0.6 ? '#ff9010' : '#ff2000';
-              c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(0)}px rgba(255, 120, 20, 0.9)`;
-              c.style.opacity = remainingOpacity.toFixed(2);
-              c._swallowState = 3;
+              c.style.color = '#ffa020';
+              c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.6)';
+              c.style.opacity = '1';
+              c.style.transform = 'none';
+              c._swallowState = 2;
             }
           }
-
-          if (p < 0.55) {
+          if (p < 0.75) {
             boxes.forEach(b => b.style.opacity = '1');
             card.style.opacity = '1';
-          } else {
-            const flightT = (p - 0.55) / 0.45;
-            const boxFade = Math.max(0, 1.0 - Math.pow(flightT, 1.5));
-            boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
-            card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.2)).toFixed(2);
           }
         };
 
-        tl.to(anim, {
-          phase: 1.0,
-          duration: 1.0,
-          ease: "power1.inOut",
-          onUpdate: () => renderPhase(anim.phase)
+        // ----------------------------------------------------------------------
+        // Autonomous flight: own 0.9s timeline, decoupled from scroll scrub so
+        // it can never freeze mid-air or fight ScrollTrigger for progress.
+        // ----------------------------------------------------------------------
+        const flight = { t: 0 };
+        const flightTl = gsap.timeline({ paused: true });
+        flightTl.eventCallback('onStart', () => {
+          measure();
+          for (let idx = 0; idx < totalChars; idx++) {
+            const c = chars[idx];
+            c.textContent = '0';
+            c._swallowState = 3;
+          }
         });
+        flightTl.to(flight, {
+          t: 1.0,
+          duration: 0.9,
+          ease: "power2.in",
+          onUpdate: () => {
+            const bhScreen = window.__getBHScreenCoord
+              ? window.__getBHScreenCoord()
+              : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
+            const ft = flight.t;
+            for (let idx = 0; idx < totalChars; idx++) {
+              const c = chars[idx];
+              const charFlightStart = (idx / totalChars) * 0.15;
+              const prog = Math.max(0, Math.min(1.0, (ft - charFlightStart) / 0.85));
+              const accel = Math.pow(prog, 2.0);
+              const origin = offsets[idx];
+              const dx = bhScreen.x - (origin.x - window.scrollX);
+              const dy = bhScreen.y - (origin.y - window.scrollY);
+              const swirlAngle = idx * 0.12 + accel * 3.0;
+              const curX = dx * accel + Math.sin(swirlAngle) * 18 * (1 - accel);
+              const curY = dy * accel + Math.cos(swirlAngle) * 12 * (1 - accel);
+              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${(-accel * 350).toFixed(0)}px) rotateX(${(accel * 35).toFixed(0)}deg) rotateZ(${(-accel * 12).toFixed(0)}deg) scale(${(1.0 + accel * 0.3).toFixed(2)}, ${Math.max(0.1, 1.0 - accel * 0.8).toFixed(2)})`;
+              c.style.color = accel < 0.6 ? '#ff9010' : '#ff2000';
+              c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(0)}px rgba(255, 120, 20, 0.9)`;
+              c.style.opacity = Math.max(0, 1.0 - Math.pow(prog, 2.2)).toFixed(2);
+            }
+            const boxFade = Math.max(0, 1.0 - Math.pow(ft, 1.5));
+            boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
+            card.style.opacity = Math.max(0, 1.0 - Math.pow(ft, 2.2)).toFixed(2);
+          }
+        });
+        flightTl.eventCallback('onReverseComplete', resetChars);
 
         // ----------------------------------------------------------------------
-        // SCROLLTRIGGER: Triggers swallow ONLY when card leaves the reading center!
-        // Hero: Swallows as user leaves top of page
-        // Content cards: Sits fully readable in center, swallows when leaving upper viewport
+        // SCROLLTRIGGER: plain trigger, no scrubbed animation, so nothing ever
+        // fights the flight timeline for progress.
         // ----------------------------------------------------------------------
         const cardST = ScrollTrigger.create({
           trigger: card,
           start: isHero ? "top top" : "top 25%",
           end: isHero ? "+=70%" : "+=60%",
-          scrub: 0.6,
-          animation: tl,
           onUpdate: (self) => {
-            // Auto-finish: once past binary, complete flight hands-off.
-            // Killed automatically when scrolling back below 0.50.
-            if (self.progress >= 0.62 && tl.progress() < 1) {
-              if (!flightTween || !flightTween.isActive()) {
-                flightTween = gsap.to(tl, {
-                  progress: 1,
-                  duration: 0.7,
-                  ease: "power2.in",
-                  overwrite: "auto"
-                });
-              }
-            } else if (self.progress < 0.50 && flightTween) {
-              flightTween.kill();
-              flightTween = null;
+            const p = self.progress;
+            if (p >= 0.80) {
+              if (flightTl.progress() === 0 && !flightTl.isActive()) flightTl.play();
+              return;
             }
-          }
+            if (p < 0.62) {
+              if (flightTl.progress() > 0 || flightTl.isActive()) flightTl.reverse();
+              else renderScramble(p);
+              return;
+            }
+            if (!flightTl.isActive()) renderScramble(Math.min(p, 0.79));
+          },
+          onLeave: () => { if (flightTl.progress() < 1) flightTl.play(); },
+          onLeaveBack: () => { if (flightTl.progress() > 0) flightTl.reverse(); else resetChars(); }
         });
         createdTriggers.push(cardST);
+        createdTriggers.push(flightTl);
       });
 
       // Terminal Whiteout Flash at the very end of runway
