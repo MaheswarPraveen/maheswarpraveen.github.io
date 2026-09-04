@@ -101,8 +101,8 @@ html.lenis, html.lenis body {
 /* Each Slide: Compact height so content center locks at exact 50vh middle-left */
 .card {
   position: relative;
-  min-height: 85vh;
-  margin-bottom: 15vh;
+  min-height: 72vh;
+  margin-bottom: 10vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -117,7 +117,7 @@ html.lenis, html.lenis body {
 /* Hero Slide: Takes full screen so slide 2 is completely hidden on load */
 .hero-card {
   min-height: 100vh;
-  margin-bottom: 15vh;
+  margin-bottom: 10vh;
   margin-top: 0;
 }
 

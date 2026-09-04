@@ -137,8 +137,9 @@ export default function BlackHoleCanvas() {
             
             gl_FragColor = texture2D(tDiffuse, warpedUv);
           } else {
-            // Ensure the inside of the event horizon is pitch black
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            // No hard black disc in post: let the real singularity mesh define
+            // the void so lensing never shrinks the BH or pushes disk outward.
+            gl_FragColor = texture2D(tDiffuse, warpedUv);
           }
         }
       `
@@ -154,7 +155,7 @@ export default function BlackHoleCanvas() {
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     singularity.position.copy(blackHolePos);
-    singularity.scale.setScalar(1.6); // Massive black spot
+    singularity.scale.setScalar(1.9); // Bigger pitch-black void only; rings untouched
     scene.add(singularity);
 
     const halo = new THREE.Mesh(
@@ -184,7 +185,7 @@ export default function BlackHoleCanvas() {
     // ------------------------------------------------------------------------
     // PHASE 2: GPU ACCELERATED ACCRETION DISK
     // ------------------------------------------------------------------------
-    const particleCount = 7000; // Half particles to ensure perfect 60FPS on old devices
+    const particleCount = 11000; // Dense enough to read as silk waves, still O(1) on GPU
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -200,12 +201,14 @@ export default function BlackHoleCanvas() {
     for (let i = 0; i < particleCount; i++) {
       // pow 2.0 packs significantly more particles near the inner edge
       const rN = Math.pow(Math.random(), 2.0);
-      // 1.65 * 1.6 scale = 2.64. The disk MUST start precisely at the edge of the singularity
-      const r = 2.64 + rN * 10.0;
+      // 1.65 * 1.9 scale = 3.14. Disk starts exactly at singularity edge;
+      // outer spread tightened so overall disk size stays the same.
+      const r = 3.14 + rN * 9.5;
       radii[i] = r;
 
-      // User requested outer particles to move FASTER than inner particles
-      speeds[i] = 0.008 + (r - 2.64) * 0.003; 
+      // True Keplerian: inner orbits faster. k=0.007 gives ~0.25 rad/s inner,
+      // ~0.11 rad/s outer (majestic ~25-55s per turn), not a blender.
+      speeds[i] = 0.007 / Math.sqrt(r);
 
       const a = Math.random() * Math.PI * 2;
       angles[i] = a;
@@ -287,16 +290,19 @@ export default function BlackHoleCanvas() {
           vec3 pos = vec3(bx + rx, spiralWave + ry, bz + rz);
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
           
-          gl_PointSize = (30.0 * (1.0 + sin(angle * 5.0)*0.2)) / -mvPosition.z;
+          gl_PointSize = (52.0 * (1.0 + sin(angle * 5.0)*0.25)) / -mvPosition.z;
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
       fragmentShader: `
         varying vec3 vColor;
         void main() {
+          // Soft radial falloff so points read as plasma waves, not grains.
           vec2 coord = gl_PointCoord - vec2(0.5);
-          if (length(coord) > 0.5) discard;
-          gl_FragColor = vec4(vColor, 0.9);
+          float d = length(coord);
+          if (d > 0.5) discard;
+          float a = smoothstep(0.5, 0.05, d);
+          gl_FragColor = vec4(vColor * a, a * 0.9);
         }
       `,
       transparent: true,
@@ -402,8 +408,8 @@ export default function BlackHoleCanvas() {
       camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-9.0 * dt));
       camera.lookAt(es.lookX, es.lookY, es.lookZ);
 
-      // Smooth hover envelope: decays during scroll, recovers organically on pause
-      const targetHover = (isMousePresent && !isScrolling) ? 1.0 : 0.0;
+      // Hover stays live during Lenis glides so the BH never feels dead.
+      const targetHover = isMousePresent ? 1.0 : 0.0;
       hoverStrength += (targetHover - hoverStrength) * (1.0 - Math.exp(-8.0 * dt));
 
       if (isMousePresent && hoverStrength > 0.01) {
@@ -477,7 +483,7 @@ export default function BlackHoleCanvas() {
       camY: 3.8,
       camX: 3.0,
       lookX: 3.0,
-      duration: 0.5,
+      duration: 0.4,
       ease: "power1.inOut"
     });
 
@@ -486,18 +492,18 @@ export default function BlackHoleCanvas() {
       camX: anchorX * 0.5,
       lookX: anchorX * 0.5,
       camZ: 14.0,
-      duration: 0.4,
+      duration: 0.35,
       ease: "power2.inOut"
     });
 
-    // RESTORED: Final cinematic vertical top-down plunge into the singularity
+    // Gradual top-down plunge spread across the finale, not a last-second snap
     masterTl.to(es, {
-      camY: 28.0,
+      camY: 26.0,
       camZ: 0.5, // 0.5 instead of 0 to prevent gimbal lock
       camX: anchorX,
       lookX: anchorX,
-      duration: 0.8,
-      ease: "power3.in"
+      duration: 0.9,
+      ease: "power2.inOut"
     });
 
     window.__getBHScreenCoord = () => {
