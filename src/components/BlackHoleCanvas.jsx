@@ -150,6 +150,7 @@ export default function BlackHoleCanvas() {
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     singularity.position.copy(blackHolePos);
+    singularity.scale.setScalar(1.4); // Made black spot larger
     scene.add(singularity);
 
     const halo = new THREE.Mesh(
@@ -158,6 +159,7 @@ export default function BlackHoleCanvas() {
     );
     halo.position.copy(blackHolePos);
     halo.rotation.x = Math.PI / 2;
+    halo.scale.setScalar(1.4);
     scene.add(halo);
 
     const outerRing = new THREE.Mesh(
@@ -166,6 +168,7 @@ export default function BlackHoleCanvas() {
     );
     outerRing.position.copy(blackHolePos);
     outerRing.rotation.x = Math.PI / 2;
+    outerRing.scale.setScalar(1.4);
     scene.add(outerRing);
 
     const verticalHalo = new THREE.Mesh(
@@ -174,6 +177,7 @@ export default function BlackHoleCanvas() {
     );
     verticalHalo.position.copy(blackHolePos);
     verticalHalo.rotation.y = 0.15;
+    verticalHalo.scale.setScalar(1.4);
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
@@ -198,7 +202,7 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 1.85 + rN * 12.5; // RESTORED original smaller size
+      const r = 2.31 + rN * 12.5; // Scaled up to match 1.4x singularity
       radii[i] = r;
 
       // Even slower Keplerian drift to prevent the "blender" look
@@ -217,22 +221,95 @@ export default function BlackHoleCanvas() {
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('angle', new THREE.BufferAttribute(angles, 1));
+    geometry.setAttribute('radius', new THREE.BufferAttribute(radii, 1));
+    geometry.setAttribute('speed', new THREE.BufferAttribute(speeds, 1));
 
-    const particles = new THREE.Points(geometry, new THREE.PointsMaterial({
-      size: 0.075,
-      map: sphereTexture,
-      vertexColors: true,
+    // PHASE 2: GPU Particle Rewrite (Zero CPU Overhead)
+    const particleUniforms = {
+      uTime: { value: 0 },
+      uSpeed: { value: 1.0 },
+      uAnchor: { value: new THREE.Vector3(anchorX, 0, 0) },
+      uMouseTarget: { value: new THREE.Vector3(9999, 0, 9999) },
+      uHoverStrength: { value: 0.0 }
+    };
+
+    const gpuMaterial = new THREE.ShaderMaterial({
+      uniforms: particleUniforms,
+      vertexShader: `
+        uniform float uTime;
+        uniform float uSpeed;
+        uniform vec3 uAnchor;
+        uniform vec3 uMouseTarget;
+        uniform float uHoverStrength;
+        
+        attribute float angle;
+        attribute float radius;
+        attribute float speed;
+        attribute vec3 customColor;
+        
+        varying vec3 vColor;
+
+        void main() {
+          vColor = customColor;
+          
+          float currentAngle = angle - speed * uTime * 60.0 * uSpeed;
+          
+          float bx = uAnchor.x + cos(currentAngle) * radius;
+          float bz = sin(currentAngle) * radius;
+          
+          float spiralWave = sin(uTime * 2.2 + currentAngle * 2.5 + radius * 1.6) * 0.22;
+          
+          float rx = 0.0;
+          float rz = 0.0;
+          float ry = 0.0;
+          
+          float REPEL_RADIUS = 0.65;
+          float REPEL_RADIUS_SQ = REPEL_RADIUS * REPEL_RADIUS;
+          
+          if (uHoverStrength > 0.02 && uMouseTarget.x < 9000.0) {
+             float targetR = length(vec2(uMouseTarget.x - uAnchor.x, uMouseTarget.z));
+             if (abs(radius - targetR) < REPEL_RADIUS) {
+                 float dx = bx - uMouseTarget.x;
+                 float dz = bz - uMouseTarget.z;
+                 float ds = dx * dx + dz * dz;
+                 if (ds < REPEL_RADIUS_SQ && ds > 0.0001) {
+                     float d = sqrt(ds);
+                     float norm = d / REPEL_RADIUS;
+                     float force = cos(norm * 1.570796) * 0.35 * uHoverStrength;
+                     rx = (dx / d) * force;
+                     rz = (dz / d) * force;
+                     ry = (1.0 - norm) * 0.24 * sin(uTime * 5.0) * uHoverStrength;
+                 }
+             }
+          }
+          
+          vec3 pos = vec3(bx + rx, spiralWave + ry, bz + rz);
+          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+          
+          gl_PointSize = (30.0 * (1.0 + sin(angle * 5.0)*0.2)) / -mvPosition.z;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor;
+        void main() {
+          vec2 coord = gl_PointCoord - vec2(0.5);
+          if (length(coord) > 0.5) discard;
+          gl_FragColor = vec4(vColor, 0.9);
+        }
+      `,
       transparent: true,
-      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       depthWrite: false
-    }));
+    });
+
+    const particles = new THREE.Points(geometry, gpuMaterial);
     scene.add(particles);
 
     // ------------------------------------------------------------------------
     // 5. AMBIENT DUST
-    // ------------------------------------------------------------------------
     const ambientCount = 300;
     const ambientGeo = new THREE.BufferGeometry();
     const ambientPos = new Float32Array(ambientCount * 3);
@@ -342,46 +419,12 @@ export default function BlackHoleCanvas() {
       }
 
       const spd = es.baseSpeed;
-      const p = particles.geometry.attributes.position.array;
-      const REPEL_RADIUS = 0.65;
-      const REPEL_RADIUS_SQ = REPEL_RADIUS * REPEL_RADIUS;
-      const checkRepel = (hoverStrength > 0.02 && rawPlaneTarget.x < 9000);
-      const targetR = checkRepel ? Math.hypot(rawPlaneTarget.x - anchorX, rawPlaneTarget.z) : -1;
-
-      for (let i = 0; i < particleCount; i++) {
-        const r = radii[i];
-        // Steady, fluid Keplerian rotation with 60 FPS reference multiplier
-        angles[i] -= speeds[i] * dt * spd * 60;
-
-        const bx = anchorX + Math.cos(angles[i]) * r;
-        const bz = Math.sin(angles[i]) * r;
-
-        let rx = 0, rz = 0, ry = 0;
-
-        // Interactive ripple on mouse hover (recovers when not scrolling)
-        if (checkRepel && Math.abs(r - targetR) < REPEL_RADIUS) {
-          const dx = bx - rawPlaneTarget.x;
-          const dz = bz - rawPlaneTarget.z;
-          const ds = dx * dx + dz * dz;
-
-          if (ds < REPEL_RADIUS_SQ && ds > 0.0001) {
-            const d = Math.sqrt(ds);
-            const norm = d / REPEL_RADIUS;
-            const force = Math.cos(norm * Math.PI * 0.5) * 0.35 * hoverStrength;
-            rx = (dx / d) * force;
-            rz = (dz / d) * force;
-            ry = (1.0 - norm) * 0.24 * Math.sin(t * 5.0) * hoverStrength;
-          }
-        }
-
-        // ORIGINAL RIPPLE WAVE: Exact sinusoidal spiral ripple from baseline
-        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.22;
-
-        p[i * 3]     = bx + rx;
-        p[i * 3 + 1] = spiralWave + ry;
-        p[i * 3 + 2] = bz + rz;
-      }
-      particles.geometry.attributes.position.needsUpdate = true;
+      
+      // Update GPU Particle Uniforms (O(1) cost instead of O(N))
+      particleUniforms.uTime.value = t;
+      particleUniforms.uSpeed.value = spd;
+      particleUniforms.uHoverStrength.value = hoverStrength;
+      particleUniforms.uMouseTarget.value.copy(rawPlaneTarget);
 
       // Ambient dust
       const ap = ambientParticles.geometry.attributes.position.array;

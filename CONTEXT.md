@@ -1,12 +1,12 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 11:08:32
+**Last Synced:** 2026-09-04 11:14:34
 
 ## Current Focus & Active State
 
 - Directive: we missed the bveritucal top view the white blank at the end. why is this happening. also veryy laggy and also not slide by slide and black hole not interactive and not even that small at initial pos
 - Rationale: Diagnosis: 1) Top view & white flash: I had removed 'pin: true' shrinking the page height, and the scroll-end div had 0 height so it couldn't be scrolled into. The top-down view was also missing from the timeline. 2) Lag: 'samples: 4' on the custom EffectComposer WebGLRenderTarget was running 4x MSAA, dropping frames heavily. 3) Not slide-by-slide: Removed pinning without providing CSS scroll snapping fallback. 4) Too big: I had accidentally increased the particle radius formula from 1.85 to 2.0. Fix: Added CSS scroll-snap, removed MSAA for performance, restored top-down cam plunge, gave the trigger div 50vh height, and reverted the original smaller BH radii.
-- Updated `CONTEXT.md` (+3/-19 lines).
+- Applied workspace modifications (+0/-13 lines).
 
 ## Recent Context Stream
 
