@@ -12,30 +12,34 @@ export default function App() {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    // ------------------------------------------------------------------------
-    // LENIS SMOOTH SCROLL INTEGRATION
-    // ------------------------------------------------------------------------
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smooth: true,
-    });
-
-    lenis.on('scroll', ScrollTrigger.update);
-
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000);
-    });
-    gsap.ticker.lagSmoothing(0);
+    let lenis;
+    let splits = [];
     const container = containerRef.current;
-    if (!container) return;
+    
+    document.fonts.ready.then(() => {
+      if (!container) return;
+      
+      // ------------------------------------------------------------------------
+      // LENIS SMOOTH SCROLL INTEGRATION
+      // ------------------------------------------------------------------------
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: 'vertical',
+        gestureDirection: 'vertical',
+        smooth: true,
+      });
 
-    const cards = Array.from(container.querySelectorAll('.card'));
-    const splits = [];
+      lenis.on('scroll', ScrollTrigger.update);
 
-    cards.forEach((card, cIdx) => {
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
+      gsap.ticker.lagSmoothing(0);
+
+      const cards = Array.from(container.querySelectorAll('.card'));
+
+      cards.forEach((card, cIdx) => {
       // 1. Separate long text elements from short ones
       const isHero = card.classList.contains('hero-card');
       const isStack = card.querySelector('.stack-grid');
@@ -235,15 +239,18 @@ export default function App() {
         } else {
           // Fade OUT white (revealing the black hole)
           overlay.style.opacity = (1.0 - ((self.progress - 0.5) / 0.5)).toFixed(2);
+          }
         }
-      }
+      });
     });
 
     return () => {
       splits.forEach((s) => s.revert());
       ScrollTrigger.getAll().forEach((t) => t.kill());
-      lenis.destroy();
-      gsap.ticker.remove(lenis.raf);
+      if (lenis) {
+        lenis.destroy();
+        gsap.ticker.remove(lenis.raf);
+      }
     };
   }, []);
 
