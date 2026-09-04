@@ -434,3 +434,10 @@ Automated continuity log maintained by offGIT.
 - Directive: hi
 - Rationale: Restarting preview server on port 8080 after server restart notice and confirming everything is running.
 - Applied workspace modifications (+0/-10 lines).
+
+## 2026-09-04 18:09:00 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: hi
+- Rationale: Restarting preview server on port 8080 after server restart notice and confirming everything is running.
+- Updated `src/components/BlackHoleCanvas.jsx` (+71/-4 lines).
+- Key changes: singularity.scale.setScalar(2.3); // Large void filling the lens disc; rings unt; void main() {; void main() {

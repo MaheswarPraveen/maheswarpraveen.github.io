@@ -120,7 +120,7 @@ export default function BlackHoleCanvas() {
           float dist = length(dir);
           vec2 warpedUv = vUv;
           
-          float eh = 0.052; // Matched to singularity scale 1.9
+          float eh = 0.062; // Matched to singularity scale 2.3
           
           // Inverse square falloff for gravitational warping (outside only)
           float warp = strength / (dist * dist + 0.001);
@@ -153,7 +153,7 @@ export default function BlackHoleCanvas() {
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     singularity.position.copy(blackHolePos);
-    singularity.scale.setScalar(1.9); // Bigger pitch-black void only; rings untouched
+    singularity.scale.setScalar(2.3); // Large void filling the lens disc; rings untouched
     scene.add(singularity);
 
     const halo = new THREE.Mesh(
@@ -199,9 +199,9 @@ export default function BlackHoleCanvas() {
     for (let i = 0; i < particleCount; i++) {
       // pow 2.0 packs significantly more particles near the inner edge
       const rN = Math.pow(Math.random(), 2.0);
-      // 1.65 * 1.9 scale = 3.14. Disk starts exactly at singularity edge;
+      // 1.65 * 2.3 scale = 3.80. Disk starts exactly at singularity edge;
       // outer spread tightened so overall disk size stays the same.
-      const r = 3.14 + rN * 9.5;
+      const r = 3.80 + rN * 8.8;
       radii[i] = r;
 
       // True Keplerian: inner orbits faster. k=0.007 gives ~0.25 rad/s inner,
@@ -310,6 +310,73 @@ export default function BlackHoleCanvas() {
 
     const particles = new THREE.Points(geometry, gpuMaterial);
     scene.add(particles);
+
+    // ------------------------------------------------------------------------
+    // 4b. INFALL STREAM: camera-side particles draining into the singularity.
+    // Fills the empty field between the text column and the BH. Fully GPU
+    // driven (O(1) CPU): each particle loops spawn -> horizon via uTime.
+    // ------------------------------------------------------------------------
+    const infallCount = 2500;
+    const infallGeo = new THREE.BufferGeometry();
+    const infallSpawn = new Float32Array(infallCount * 3);
+    const infallSeed = new Float32Array(infallCount);
+    for (let i = 0; i < infallCount; i++) {
+      // Wide slab on the text side + front (camera side), draining right.
+      infallSpawn[i * 3] = -14 + Math.random() * (anchorX - 3.0 + 14);
+      infallSpawn[i * 3 + 1] = (Math.random() - 0.5) * 14;
+      infallSpawn[i * 3 + 2] = Math.random() * 10;
+      infallSeed[i] = Math.random();
+    }
+    infallGeo.setAttribute('position', new THREE.BufferAttribute(infallSpawn, 3));
+    infallGeo.setAttribute('seed', new THREE.BufferAttribute(infallSeed, 1));
+    const infallUniforms = {
+      uTime: particleUniforms.uTime,
+      uCenter: { value: new THREE.Vector3(anchorX, 0, 0) }
+    };
+    const infallMat = new THREE.ShaderMaterial({
+      uniforms: infallUniforms,
+      vertexShader: `
+        uniform float uTime;
+        uniform vec3 uCenter;
+        attribute float seed;
+        varying float vLife;
+        varying float vSeed;
+        void main() {
+          vSeed = seed;
+          float rate = 0.10 + fract(seed * 7.13) * 0.12;
+          float life = fract(uTime * rate + seed);
+          vLife = life;
+          // Accelerating plunge: slow drift far away, rush into the horizon
+          vec3 pos = mix(position, uCenter, pow(life, 1.6));
+          // Slight curl so streams feel gravitational, not linear
+          pos.y += sin(life * 6.0 + seed * 40.0) * 0.5 * (1.0 - life);
+          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = (34.0 * (0.5 + fract(seed * 3.7) * 0.7) * (1.0 - life * 0.6)) / -mvPosition.z;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        varying float vLife;
+        varying float vSeed;
+        void main() {
+          vec2 coord = gl_PointCoord - vec2(0.5);
+          float d = length(coord);
+          if (d > 0.5) discard;
+          float a = smoothstep(0.5, 0.05, d);
+          // White-hot head fading to ember tail, alpha swells mid-flight
+          vec3 head = vec3(1.0, 0.85, 0.6);
+          vec3 tail = vec3(0.9, 0.25, 0.05);
+          vec3 col = mix(head, tail, smoothstep(0.0, 1.0, vLife));
+          float fade = smoothstep(0.0, 0.15, vLife) * (1.0 - smoothstep(0.75, 1.0, vLife));
+          gl_FragColor = vec4(col * a, a * fade * 0.85);
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const infall = new THREE.Points(infallGeo, infallMat);
+    scene.add(infall);
 
     // ------------------------------------------------------------------------
     // 5. AMBIENT DUST
