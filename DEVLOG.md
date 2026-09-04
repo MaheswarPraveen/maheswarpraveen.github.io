@@ -265,3 +265,9 @@ Automated continuity log maintained by offGIT.
 - Directive: dude check the scroll time inbetwwen , the stucking while binary goes to black hole , and the way cheaply the letters turn to binary, check yourself, tell me whats happening. then say the solution and we'll fix
 - Rationale: Diagnosis: 1) 'Scroll time inbetween': Pinned sections force the user to scroll through dead space. Removing pin: true will let the layout flow naturally. 2) 'Stucking': The user scrolls faster than the 1.8s animation, causing ScrollTrigger onLeave to instantly snap progress(1), aborting the flight mid-air. 3) 'Cheap binary': Blinking 0s/1s uniformly looks like a cheap marquee. Solution: Remove pin: true. Make the flight much faster (0.8s). Change the binary transition to a fast, staggered matrix-decay rather than a uniform blink.
 - Updated `src/components/BlackHoleCanvas.jsx`, `src/styles/index.css` (+8/-2 lines).
+
+## 2026-09-04 10:29:53 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: **Web Dev Libraries**\nLenis  smooth scroll...
+- Rationale: The user provided a comprehensive roadmap of advanced visual features and library integrations. Because this involves a massive architectural shift (moving CPU particles to custom GLSL GPU shaders, adding custom post-processing passes, and redesigning the event horizon material), I am entering Planning Mode to structure these changes into manageable phases and get the user's approval before writing the complex shader code.
+- Updated `CONTEXT.md` (+4/-18 lines).
