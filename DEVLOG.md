@@ -295,3 +295,9 @@ Automated continuity log maintained by offGIT.
 - Directive: everything is completely destroyed, check yourself
 - Rationale: Diagnosis: 1) The 'BokehPass' completely blurred the screen into a dark mush because its 'focus' depth buffer target wasn't dynamically synced per-frame to the camera's Z distance. 2) The Gravitational Lensing shader had a hard UV cutoff ('dist < radius') that caused extreme UV tearing and a giant glowing sphere boundary. Fix: Disabled BokehPass (we will implement it later via the GPU Particle size variance natively). Re-wrote the Lensing shader to use 'smoothstep' decay so the warp smoothly blends back to 0 without any tearing.
 - Updated `src/App.jsx` (+1/-1 lines).
+
+## 2026-09-04 11:02:46 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: dude as soon as i loaded tmy name was absorbed into back hole. also no waves particles. and black hole is too fast
+- Rationale: Diagnosis: 1) Instant Swallow: ScrollTrigger start was set to 'center 55%', which triggers instantly on load because the hero card is already past 55vh. Changed to 'top -50px' so user MUST scroll down 50px to trigger it. 2) Too fast & no waves: Reverted the mathematical ripple wave exact original
+- Updated `CONTEXT.md` (+3/-26 lines).

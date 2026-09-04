@@ -197,28 +197,22 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 1.85 + rN * 12.5;
-      const a = Math.random() * Math.PI * 2;
+      const r = 1.85 + rN * 12.5; // RESTORED original smaller size
       radii[i] = r;
-      angles[i] = a;
 
-      // SLOWED: was 0.22 (way too fast / "blender" look). 0.07 gives a majestic,
-      // butter-smooth Keplerian drift while keeping inner particles slightly
-      // faster than outer ones (physically correct falloff via 1/sqrt(r)).
-      speeds[i] = 0.07 / Math.sqrt(r);
+      // Even slower Keplerian drift to prevent the "blender" look
+      speeds[i] = 0.035 / Math.sqrt(r);
+
+      const a = Math.random() * Math.PI * 2;
+      angles[i] = a;
 
       positions[i * 3] = anchorX + Math.cos(a) * r;
       positions[i * 3 + 1] = (Math.random() - 0.5) * (0.15 + rN * 0.3);
       positions[i * 3 + 2] = Math.sin(a) * r;
 
-      if (rN < 0.22) {
-        tempColor.copy(cIn).lerp(cMid, rN / 0.22);
-      } else {
-        tempColor.copy(cMid).lerp(cOut, (rN - 0.22) / 0.78);
-      }
-      colors[i * 3] = tempColor.r;
-      colors[i * 3 + 1] = tempColor.g;
-      colors[i * 3 + 2] = tempColor.b;
+      tempColor.lerpColors(cIn, cMid, Math.min(1.0, r / 8.0));
+      tempColor.lerp(cOut, Math.max(0, (r - 8.0) / 20.0));
+      tempColor.toArray(colors, i * 3);
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -379,9 +373,8 @@ export default function BlackHoleCanvas() {
           }
         }
 
-        // RESTORED RIPPLE WAVE: Boosted time frequency and amplitude so it remains highly visible 
-        // even with the majestically slow 0.07 rotation speed.
-        const spiralWave = Math.sin(t * 3.5 + angles[i] * 2.5 + r * 1.6) * 0.35;
+        // ORIGINAL RIPPLE WAVE: Exact sinusoidal spiral ripple from baseline
+        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.22;
 
         p[i * 3]     = bx + rx;
         p[i * 3 + 1] = spiralWave + ry;
