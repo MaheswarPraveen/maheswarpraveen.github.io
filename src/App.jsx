@@ -158,7 +158,7 @@ export default function App() {
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "center 55%", // Trigger right when it hits center
+        start: "top -50px", // User must scroll down 50px to trigger it (prevents instant triggering on load)
         onEnter: () => tl.play(),
         onEnterBack: () => tl.reverse(),
         onLeave: () => { /* let it naturally scroll out of view */ },

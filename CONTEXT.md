@@ -1,12 +1,12 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 10:46:32
+**Last Synced:** 2026-09-04 10:57:18
 
 ## Current Focus & Active State
 
 - Directive: everything is completely destroyed, check yourself
 - Rationale: Diagnosis: 1) The 'BokehPass' completely blurred the screen into a dark mush because its 'focus' depth buffer target wasn't dynamically synced per-frame to the camera's Z distance. 2) The Gravitational Lensing shader had a hard UV cutoff ('dist < radius') that caused extreme UV tearing and a giant glowing sphere boundary. Fix: Disabled BokehPass (we will implement it later via the GPU Particle size variance natively). Re-wrote the Lensing shader to use 'smoothstep' decay so the warp smoothly blends back to 0 without any tearing.
-- Updated `CONTEXT.md` (+3/-17 lines).
+- Updated `src/App.jsx` (+1/-1 lines).
 
 ## Recent Context Stream
 
