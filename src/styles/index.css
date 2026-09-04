@@ -17,6 +17,8 @@ html {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  /* No scroll-snap: it fights Lenis momentum and reads as sticking.
+     The one-slide-at-a-time feel comes from stage geometry below. */
 }
 
 body {
@@ -98,11 +100,14 @@ html.lenis, html.lenis body {
 
 
 
-/* Each Slide: Compact height so content center locks at exact 50vh middle-left */
+/* Each Slide: full viewport stage + breathing room, so exactly one slide
+   owns the screen during its hold. Spacing (122vh) exceeds the trigger
+   window (100vh) — transitions can never share the stage. */
 .card {
   position: relative;
-  min-height: 78vh;
-  margin-bottom: 10vh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-bottom: 22vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -117,8 +122,43 @@ html.lenis, html.lenis body {
 /* Hero Slide: Takes full screen so slide 2 is completely hidden on load */
 .hero-card {
   min-height: 100vh;
-  margin-bottom: 10vh;
+  margin-bottom: 22vh;
   margin-top: 0;
+}
+
+/* Deck furniture: slide counter + progress hairline (fixed, non-interactive) */
+#deck-counter {
+  position: fixed;
+  left: clamp(48px, 8vw, 120px);
+  bottom: 28px;
+  z-index: 50;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+#deck-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 50;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#deck-progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff8800, #ffcf7a);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
 }
 
 /* ==========================================================================
@@ -127,7 +167,7 @@ html.lenis, html.lenis body {
 
 /* Hero Typography */
 .name-title {
-  font-size: clamp(4rem, 5vw, 5.4rem);
+  font-size: clamp(4.6rem, 5.6vw, 6.6rem);
   font-weight: 800;
   letter-spacing: -0.045em;
   color: #f5f5f7;
@@ -183,7 +223,7 @@ html.lenis, html.lenis body {
 
 /* Section Title — Bold, Imposing Headline */
 .section-title {
-  font-size: clamp(2.6rem, 2.9vw, 3.1rem);
+  font-size: clamp(3.0rem, 3.4vw, 3.9rem);
   font-weight: 800;
   color: #f5f5f7;
   line-height: 1.15;
@@ -194,7 +234,7 @@ html.lenis, html.lenis body {
 
 /* Description — Comfortable, Rich Editorial Cadence */
 .section-desc {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 400;
   color: #c2c2c2;
   line-height: 1.72;
@@ -215,7 +255,7 @@ html.lenis, html.lenis body {
 }
 
 .tag {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #a8a8a8;
   background-color: rgba(255, 255, 255, 0.05);
@@ -254,12 +294,13 @@ html.lenis, html.lenis body {
   line-height: 1.65;
 }
 
-/* High-Performance 60 FPS Characters */
+/* High-Performance 60 FPS Characters: NO base will-change — 2100 forced
+   compositor layers tank the GPU. will-change is set from JS only on the
+   ~200 chars of the card currently flying, then cleared. */
 .char, .word {
   display: inline-block;
   transform-style: preserve-3d;
   backface-visibility: hidden;
-  will-change: transform, opacity;
 }
 
 /* SplitType line/word wrappers: block lines keep layout identical to the
@@ -292,9 +333,9 @@ html.lenis, html.lenis body {
     margin-left: clamp(36px, 6vw, 64px);
     perspective-origin: 60% 50%;
   }
-  .name-title { font-size: 3.6rem; }
-  .section-title { font-size: 2.3rem; }
-  .section-desc { font-size: 1.2rem; }
+  .name-title { font-size: 5.0rem; }
+  .section-title { font-size: 3.2rem; }
+  .section-desc { font-size: 1.4rem; }
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
