@@ -241,3 +241,9 @@ Automated continuity log maintained by offGIT.
 - Directive: dude its changing to binary fast and its staying in binary for long . thatss still stupid
 - Rationale: Adjusted the scramble progress formula in App.jsx. The English text phase now lasts from p=0.0 to 0.40 (much longer readability). The flickering binary phase is compressed from p=0.40 to 0.55, making it a quick, purposeful transition before the solid zeroes fly into the black hole.
 - Updated `CONTEXT.md` (+3/-26 lines).
+
+## 2026-09-04 09:46:31 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: its changing to fast to binary you frciking stupid and also i have to scroll to much for next slide to come and fucking also why the fuck its stuck at binary if dont scroll i said it should fucking go away once binary. also fuckin stuckky
+- Rationale: The user's core issue is that the scramble and flight are currently tied to scroll 'scrubbing' - meaning if they stop scrolling, the animation stops, leaving it stuck in binary. Additionally, the scroll track is too long ('end: +=380%'). Fix: Detach the scramble and swallow sequence from 'scrub'. Instead, when the scroll crosses a short threshold (15%), trigger a standalone GSAP timeline that autonomously scrambles (0.5s), locks to zeroes (0.2s), and flies into the black hole (1.1s) without requiring any further scrolling. Reduce pin duration to '+=100%' so the next slide arrives much faster.
+- Updated `CONTEXT.md` (+3/-26 lines).

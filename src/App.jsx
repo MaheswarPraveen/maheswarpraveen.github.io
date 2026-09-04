@@ -37,69 +37,66 @@ export default function App() {
         c.dataset.orig = c.textContent;
         c._swallowState = 0;
         c._lastFlip = 0;
-        // Set once, not per-frame: hints the compositor to promote these to
-        // their own layer, and gives color/shadow changes a soft transition
-        // instead of a hard cut — a big part of what read as "cheap".
-        c.style.willChange = 'transform, opacity';
-        c.style.transition = 'color 0.12s ease, text-shadow 0.12s ease';
         const rect = c.getBoundingClientRect();
         return { x: rect.left, y: rect.top };
       });
 
-      // Preallocated once per card — reused every frame instead of a fresh
-      // array being allocated on every single scroll tick (was causing GC
-      // pauses that showed up as stutter).
-      const nextGlyphs = new Array(totalChars);
-
       // ----------------------------------------------------------------------
-      // AUTONOMOUS 3D SWALLOW TIMELINE (Plays automatically once all chars are 0)
+      // CINEMATIC TIMELINE: Detached from scroll-scrubbing.
+      // This plays autonomously once triggered. No more "stuck" letters.
       // ----------------------------------------------------------------------
-      const swallowAnim = { flight: 0 };
-      const autoSwallowTl = gsap.timeline({ paused: true });
+      const anim = { phase: 0 };
+      const tl = gsap.timeline({ paused: true });
       let capturedBH = null;
-      masterAnimTl.eventCallback('onStart', () => {
+
+      tl.eventCallback('onStart', () => {
         capturedBH = window.__getBHScreenCoord
           ? window.__getBHScreenCoord()
           : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
       });
 
-      // Part 1: The Scramble Phase (Time-based, controlled, doesn't get stuck)
-      masterAnimTl.to(scrambleAnim, {
-        progress: 1.0,
-        duration: 0.6, // 600ms of beautiful binary flicker before flight
+      tl.to(anim, {
+        phase: 1.0,
+        duration: 1.8, // Cinematic, deliberate sequence duration (1.8 seconds)
         ease: "none",
         onUpdate: () => {
-          const sp = scrambleAnim.progress;
-          if (sp < 0.95) {
-            const now = performance.now();
-            let anyFlipped = false;
-            for (let idx = 0; idx < totalChars; idx++) {
-              const c = chars[idx];
-              if (now - (c._lastFlip || 0) > 90) {
-                nextGlyphs[idx] = Math.random() > 0.5 ? '1' : '0';
+          const p = anim.phase;
+          const bhScreen = capturedBH || (window.__getBHScreenCoord
+            ? window.__getBHScreenCoord()
+            : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 });
+
+          // Phase 1 (0.0 - 0.3): Throttled binary scramble (0.54 seconds)
+          // Phase 2 (0.3 - 0.4): Lock to solid zeroes (0.18 seconds)
+          // Phase 3 (0.4 - 1.0): Flight into black hole (1.08 seconds)
+
+          const now = performance.now();
+
+          for (let idx = 0; idx < totalChars; idx++) {
+            const c = chars[idx];
+
+            if (p === 0) {
+              if (c._swallowState !== 0) {
+                c.textContent = c.dataset.orig;
+                c.style.color = '';
+                c.style.opacity = '1';
+                c.style.transform = 'none';
+                c.style.textShadow = 'none';
+                c._swallowState = 0;
+              }
+            } else if (p > 0 && p < 0.3) {
+              // Throttled flicker (retained from LLM fix, approx 10 flips/sec)
+              if (now - c._lastFlip > 90) {
+                c.textContent = Math.random() > 0.5 ? '1' : '0';
                 c._lastFlip = now;
-                anyFlipped = true;
-              } else {
-                nextGlyphs[idx] = c.textContent;
               }
-            }
-            if (anyFlipped) {
-              for (let idx = 0; idx < totalChars; idx++) {
-                const c = chars[idx];
-                if (c.textContent !== nextGlyphs[idx]) c.textContent = nextGlyphs[idx];
-                if (c._swallowState !== 1) {
-                  c.style.color = '#ffb030';
-                  c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.5)';
-                  c.style.opacity = '1';
-                  c.style.transform = 'none';
-                  c._swallowState = 1;
-                }
+              if (c._swallowState !== 1) {
+                c.style.color = '#ffb030';
+                c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.5)';
+                c.style.opacity = '1';
+                c.style.transform = 'none';
+                c._swallowState = 1;
               }
-            }
-          } else {
-            // Lock to solid zeroes right before flight
-            for (let idx = 0; idx < totalChars; idx++) {
-              const c = chars[idx];
+            } else if (p >= 0.3 && p < 0.4) {
               if (c._swallowState !== 2) {
                 c.textContent = '0';
                 c.style.color = '#ffa020';
@@ -108,104 +105,88 @@ export default function App() {
                 c.style.transform = 'none';
                 c._swallowState = 2;
               }
+            } else {
+              const flightT = (p - 0.4) / 0.6; 
+              const charFlightStart = (idx / totalChars) * 0.25;
+              const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.75));
+              const accel = Math.pow(progressInFlight, 2.0);
+
+              const origin = offsets[idx];
+              const dx = bhScreen.x - origin.x;
+              const dy = bhScreen.y - origin.y;
+
+              const swirlAngle = idx * 0.10 + accel * 3.2;
+              const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
+              const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
+
+              const curX = dx * accel + swirlX;
+              const curY = dy * accel + swirlY;
+              const curZ = -accel * 550;
+
+              const scaleX = 1.0 + accel * 0.35;
+              const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
+              const rotX = accel * 52;
+              const rotZ = -accel * 16;
+              const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.2));
+
+              if (c.textContent !== '0') c.textContent = '0';
+              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
+              
+              const shadowStep = Math.round((1 - accel) * 4) / 4;
+              c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
+              c.style.textShadow = `0 0 ${Math.max(2, 10 * shadowStep).toFixed(0)}px rgba(255, 120, 20, 0.8)`;
+              c.style.opacity = remainingOpacity.toFixed(2);
+              c._swallowState = 3;
             }
+          }
+
+          if (p < 0.4) {
+             boxes.forEach(b => b.style.opacity = '1');
+             card.style.opacity = '1';
+          } else {
+             const flightT = (p - 0.4) / 0.6;
+             const boxFade = Math.max(0, 1.0 - flightT * 1.6);
+             boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
+             card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.0)).toFixed(2);
           }
         }
       });
 
-      // Part 2: The Flight Phase (Automatically plays right after scramble)
-      masterAnimTl.to(flightAnim, {
-        progress: 1.0,
-        duration: 1.4, // graceful flight
-        ease: "power2.inOut",
-        onUpdate: () => {
-          const flightT = flightAnim.progress;
-          const bhScreen = capturedBH || { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 };
-
-          for (let idx = 0; idx < totalChars; idx++) {
-            const c = chars[idx];
-            const charFlightStart = (idx / totalChars) * 0.25;
-            const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.75));
-            const accel = Math.pow(progressInFlight, 2.0);
-
-            const origin = offsets[idx];
-            const dx = bhScreen.x - origin.x;
-            const dy = bhScreen.y - origin.y;
-
-            const swirlAngle = idx * 0.10 + accel * 3.2;
-            const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
-            const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
-
-            const curX = dx * accel + swirlX;
-            const curY = dy * accel + swirlY;
-            const curZ = -accel * 550;
-
-            const scaleX = 1.0 + accel * 0.35;
-            const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
-            const rotX = accel * 52;
-            const rotZ = -accel * 16;
-            const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.2));
-
-            if (c.textContent !== '0') c.textContent = '0';
-            c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
-            const shadowStep = Math.round((1 - accel) * 4) / 4;
-            c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-            c.style.textShadow = `0 0 ${Math.max(2, 10 * shadowStep).toFixed(0)}px rgba(255, 120, 20, 0.8)`;
-            c.style.opacity = remainingOpacity.toFixed(2);
-          }
-
-          const boxFade = Math.max(0, 1.0 - flightT * 1.6);
-          boxes.forEach((b) => {
-            b.style.opacity = boxFade.toFixed(2);
-          });
-          card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.0)).toFixed(2);
-        }
-      }, "-=0.1"); // Start flight slightly before scramble completely locks for fluidity
-
       // ----------------------------------------------------------------------
-      // SCROLLTRIGGER: Reduced runway & pure threshold triggers
+      // SCROLLTRIGGER: Trigger the timeline but DO NOT scrub it.
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
         start: "center center",
-        // Drastically shortened so the next slide comes up much faster
-        end: "+=100%",
+        // Drastically shortened so you don't have to scroll much to reach next slide
+        end: "+=100%", 
         pin: true,
         pinSpacing: true,
         onUpdate: (self) => {
-          const p = self.progress;
-
-          // Trigger autonomous animation once scrolled past 15%
-          if (p >= 0.15) {
-            if (!masterAnimTl.isActive() && masterAnimTl.progress() === 0) {
-              masterAnimTl.play();
+          const sp = self.progress;
+          
+          // Trigger the autonomous sequence at a 15% scroll threshold
+          if (sp > 0.15) {
+            if (!tl.isActive() && tl.progress() < 1) {
+              tl.play(); // Auto-plays through the whole sequence, doesn't stick
             }
-          }
-          // Reverse if they scroll back to the very top
-          else if (p < 0.05) {
-            if (!masterAnimTl.isActive() && masterAnimTl.progress() > 0) {
-              masterAnimTl.reverse();
+          } 
+          // Reverse if user actively scrolls back up to the top
+          else if (sp < 0.10) {
+            if (!tl.isActive() && tl.progress() > 0) {
+              tl.reverse();
+            } else if (tl.isActive() && !tl.reversed()) {
+              tl.reverse();
             }
           }
         },
         onLeave: () => {
-          masterAnimTl.progress(1);
+          tl.progress(1);
           card.style.opacity = '0';
         },
         onLeaveBack: () => {
-          masterAnimTl.progress(0);
-          chars.forEach((c) => {
-            c.textContent = c.dataset.orig;
-            c.style.color = '';
-            c.style.opacity = '1';
-            c.style.transform = 'none';
-            c.style.textShadow = 'none';
-            c._swallowState = 0;
-          });
+          tl.progress(0);
           card.style.opacity = '1';
-          boxes.forEach((b) => {
-            b.style.opacity = '1';
-          });
         }
       });
     });
