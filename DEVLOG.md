@@ -349,3 +349,10 @@ Automated continuity log maintained by offGIT.
 - Directive: no dont scale up glowing ring , only scale up black singularity., also it should be fully optimized to work smoothl6
 - Rationale: Diagnosis: 1) Glowing rings were scaled with the black spot. Reverted scale on halo/outerRing meshes. 2) User reported lag despite GPU particles. The UnrealBloomPass and 1.5x pixel ratio were causing massive GPU fill-rate overhead on high-DPI displays. Fix: Capped renderer pixel ratio to 1.0 (eliminates 4x pixel overhead on Retina/4K) and downscaled the UnrealBloomPass internal resolution vector by 50% (preserves the soft glow but computes 4x faster).
 - Applied workspace modifications (+0/-10 lines).
+
+## 2026-09-04 16:00:06 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: are you frikcing kidding me, did you even do anything , the black sphere is same frickin size , the next sphere is still fricking big. writing isnt in the middle , added more scroll gap , and at the end theres still traces of black hole after white to black transition'
+- Rationale: Diagnosis: 1) The user meant the inner radius of the glowing accretion disk particles was still bleeding over the black hole geometry because I hadn't pushed the inner radius of the particles outward to match the newly scaled singularity geometry, making the singularity 'look' small. 2) The 'traces of black hole' was because the whiteout flash didn't fade back to transparent at the end. 3) The scroll gap was because I added 'min-height: 100vh' to the sections, which added 80vh of empty space to each card. Fix: Scaled singularity to 1.6x AND perfectly offset the particle inner radius to 2.64 so the black void reads visually correctly. Fixed the flash fade math. Reverted the cards to 'min-height: auto' but kept only the hero card at 100vh so the 2nd slide doesn't bleed in.
+- Updated `CONTEXT.md` (+3/-17 lines).
+- Key changes: - Rationale: Diagnosis: 1) The user meant the inner radius of the glowing accret
