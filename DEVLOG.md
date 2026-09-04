@@ -271,3 +271,9 @@ Automated continuity log maintained by offGIT.
 - Directive: **Web Dev Libraries**\nLenis  smooth scroll...
 - Rationale: The user provided a comprehensive roadmap of advanced visual features and library integrations. Because this involves a massive architectural shift (moving CPU particles to custom GLSL GPU shaders, adding custom post-processing passes, and redesigning the event horizon material), I am entering Planning Mode to structure these changes into manageable phases and get the user's approval before writing the complex shader code.
 - Updated `CONTEXT.md` (+4/-18 lines).
+
+## 2026-09-04 10:35:44 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: **Web Dev Libraries**\nLenis  smooth scroll...
+- Rationale: The user provided a comprehensive roadmap of advanced visual features and library integrations. Because this involves a massive architectural shift (moving CPU particles to custom GLSL GPU shaders, adding custom post-processing passes, and redesigning the event horizon material), I am entering Planning Mode to structure these changes into manageable phases and get the user's approval before writing the complex shader code.
+- Applied workspace modifications (+0/-13 lines).

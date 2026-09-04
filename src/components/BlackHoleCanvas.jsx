@@ -5,6 +5,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -58,17 +60,12 @@ export default function BlackHoleCanvas() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 
+    // Phase 1: ACES Filmic Tone Mapping
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
     // ------------------------------------------------------------------------
-    // BLOOM POST-PROCESSING — the flat additive rings/particles were the main
-    // source of the "cheap" look. A real bloom pass gives the disk actual
-    // light-bleed and makes the singularity edge glow instead of looking like
-    // a flat orange ring. This is the single highest-impact visual change.
-    //
-    // CAVEAT: UnrealBloomPass's composite shader writes alpha as opaque, so
-    // if you render straight to the default composer target you lose the
-    // canvas's transparent background (renderer alpha:true) and get a solid
-    // black rect behind it. Fixed by giving the composer its own RGBA render
-    // target explicitly, which keeps alpha through the render/bloom passes.
+    // BLOOM POST-PROCESSING
     // ------------------------------------------------------------------------
     renderer.setClearColor(0x000000, 0);
     const renderTarget = new THREE.WebGLRenderTarget(
@@ -82,9 +79,68 @@ export default function BlackHoleCanvas() {
       new THREE.Vector2(window.innerWidth, window.innerHeight),
       0.85,  // strength
       0.55,  // radius
-      0.15   // threshold — low so the warm particle colors catch bloom
+      0.15   // threshold
     );
     composer.addPass(bloomPass);
+
+    // Phase 1: Depth of Field (BokehPass)
+    const bokehPass = new BokehPass(scene, camera, {
+      focus: 15.0, // Distance to the black hole
+      aperture: 0.00001,
+      maxblur: 0.008,
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+    composer.addPass(bokehPass);
+
+    // Phase 1: Custom Gravitational Lensing ShaderPass
+    const LensingShader = {
+      uniforms: {
+        tDiffuse: { value: null },
+        bhPos: { value: new THREE.Vector2(0.5, 0.5) },
+        radius: { value: 0.25 },
+        strength: { value: 0.08 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform vec2 bhPos;
+        uniform float radius;
+        uniform float strength;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 dir = vUv - bhPos;
+          // Compensate for aspect ratio roughly if needed, assuming 16:9 for distance
+          // dir.x *= 1.77; 
+          float dist = length(dir);
+          vec2 warpedUv = vUv;
+          
+          float eh = 0.06; // Event horizon radius in screen space
+          
+          if (dist > eh && dist < radius) {
+            // Inverse square falloff for gravitational warping
+            float warp = strength / (dist * dist);
+            warp = clamp(warp, 0.0, 0.5); // Prevent extreme tearing
+            warpedUv -= normalize(dir) * warp;
+            gl_FragColor = texture2D(tDiffuse, warpedUv);
+          } else if (dist <= eh) {
+            // Ensure the inside of the event horizon is pitch black
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+          } else {
+            gl_FragColor = texture2D(tDiffuse, vUv);
+          }
+        }
+      `
+    };
+    const lensingPass = new ShaderPass(LensingShader);
+    composer.addPass(lensingPass);
 
     // ------------------------------------------------------------------------
     // 3. SINGULARITY & DUAL LENSING PHOTON RINGS
@@ -362,7 +418,15 @@ export default function BlackHoleCanvas() {
       outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
       verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
 
-      composer.render();
+        // Phase 1: Update Gravitational Lensing target dynamically
+        const bhWorld = new THREE.Vector3(anchorX, 0, 0);
+        bhWorld.project(camera);
+        lensingPass.uniforms.bhPos.value.set(
+          (bhWorld.x * 0.5) + 0.5,
+          (bhWorld.y * 0.5) + 0.5
+        );
+
+        composer.render();
     }
 
     camera.position.set(es.camX, es.camY, es.camZ);
