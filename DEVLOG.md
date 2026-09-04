@@ -337,3 +337,9 @@ Automated continuity log maintained by offGIT.
 - Directive: no dont scale up glowing ring , only scale up black singularity., also it should be fully optimized to work smoothl6
 - Rationale: Diagnosis: 1) Glowing rings were scaled with the black spot. Reverted scale on halo/outerRing meshes. 2) User reported lag despite GPU particles. The UnrealBloomPass and 1.5x pixel ratio were causing massive GPU fill-rate overhead on high-DPI displays. Fix: Capped renderer pixel ratio to 1.0 (eliminates 4x pixel overhead on Retina/4K) and downscaled the UnrealBloomPass internal resolution vector by 50% (preserves the soft glow but computes 4x faster).
 - Applied workspace modifications (+0/-10 lines).
+
+## 2026-09-04 15:49:18 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: no dont scale up glowing ring , only scale up black singularity., also it should be fully optimized to work smoothl6
+- Rationale: Diagnosis: 1) Glowing rings were scaled with the black spot. Reverted scale on halo/outerRing meshes. 2) User reported lag despite GPU particles. The UnrealBloomPass and 1.5x pixel ratio were causing massive GPU fill-rate overhead on high-DPI displays. Fix: Capped renderer pixel ratio to 1.0 (eliminates 4x pixel overhead on Retina/4K) and downscaled the UnrealBloomPass internal resolution vector by 50% (preserves the soft glow but computes 4x faster).
+- Updated `src/App.jsx` (+5/-3 lines).

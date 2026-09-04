@@ -174,12 +174,14 @@ export default function App() {
       onUpdate: (self) => {
         const overlay = document.getElementById('flash-overlay');
         if (!overlay) return;
+        overlay.style.backgroundColor = '#ffffff'; // Always white
+        
         if (self.progress < 0.5) {
-          overlay.style.backgroundColor = '#ffffff';
+          // Fade IN white
           overlay.style.opacity = (self.progress / 0.5).toFixed(2);
         } else {
-          overlay.style.backgroundColor = '#000000';
-          overlay.style.opacity = ((self.progress - 0.5) / 0.5).toFixed(2);
+          // Fade OUT white (revealing the black hole)
+          overlay.style.opacity = (1.0 - ((self.progress - 0.5) / 0.5)).toFixed(2);
         }
       }
     });
