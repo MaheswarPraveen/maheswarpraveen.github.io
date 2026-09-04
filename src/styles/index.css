@@ -73,7 +73,6 @@ body {
 /* Re-enable pointer events ONLY on the actual content cards */
 .card {
   pointer-events: auto;
-  scroll-snap-align: center;
 }
 
 /* Each Slide: Compact height so content center locks at exact 50vh middle-left */

@@ -150,7 +150,7 @@ export default function BlackHoleCanvas() {
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     singularity.position.copy(blackHolePos);
-    singularity.scale.setScalar(1.4); // Made black spot larger
+    singularity.scale.setScalar(1.25); // Only scale the black void
     scene.add(singularity);
 
     const halo = new THREE.Mesh(
@@ -159,7 +159,7 @@ export default function BlackHoleCanvas() {
     );
     halo.position.copy(blackHolePos);
     halo.rotation.x = Math.PI / 2;
-    halo.scale.setScalar(1.4);
+    // Removed scale to keep glowing ring original size
     scene.add(halo);
 
     const outerRing = new THREE.Mesh(
@@ -168,7 +168,7 @@ export default function BlackHoleCanvas() {
     );
     outerRing.position.copy(blackHolePos);
     outerRing.rotation.x = Math.PI / 2;
-    outerRing.scale.setScalar(1.4);
+    // Removed scale
     scene.add(outerRing);
 
     const verticalHalo = new THREE.Mesh(
@@ -177,7 +177,7 @@ export default function BlackHoleCanvas() {
     );
     verticalHalo.position.copy(blackHolePos);
     verticalHalo.rotation.y = 0.15;
-    verticalHalo.scale.setScalar(1.4);
+    // Removed scale
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
@@ -202,7 +202,7 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 2.31 + rN * 12.5; // Scaled up to match 1.4x singularity
+      const r = 2.1 + rN * 12.5; // Scaled to match 1.25x singularity
       radii[i] = r;
 
       // Even slower Keplerian drift to prevent the "blender" look
