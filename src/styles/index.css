@@ -67,6 +67,11 @@ body {
   max-width: clamp(480px, 35vw, 580px);
   margin-left: clamp(48px, 8vw, 120px);
   padding: 0;
+  pointer-events: none; /* Let clicks pass through to canvas */
+}
+
+/* Re-enable pointer events ONLY on the actual content cards */
+.card {
   pointer-events: auto;
 }
 

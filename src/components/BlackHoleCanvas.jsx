@@ -324,8 +324,9 @@ export default function BlackHoleCanvas() {
           }
         }
 
-        // ORIGINAL RIPPLE WAVE: Exact sinusoidal spiral ripple from baseline (7e1c8775)
-        const spiralWave = Math.sin(t * 2.2 + angles[i] * 2.5 + r * 1.6) * 0.22;
+        // RESTORED RIPPLE WAVE: Boosted time frequency and amplitude so it remains highly visible 
+        // even with the majestically slow 0.07 rotation speed.
+        const spiralWave = Math.sin(t * 3.5 + angles[i] * 2.5 + r * 1.6) * 0.35;
 
         p[i * 3]     = bx + rx;
         p[i * 3 + 1] = spiralWave + ry;
