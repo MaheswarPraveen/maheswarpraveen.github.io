@@ -398,3 +398,9 @@ Automated continuity log maintained by offGIT.
 - Directive: well good thing, you still didnt fixed scroll and its still messed uup, thanks for wasting my credits
 - Rationale: The user reports that scrolling is still not fixed and completely messed up. Inspecting App.jsx and index.css to understand how Lenis, ScrollTrigger, body overflow, and CSS are interacting, why it is jittery or broken, and fixing the exact root cause without breaking layout.
 - Updated `CONTEXT.md` (+3/-17 lines).
+
+## 2026-09-04 17:21:35 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: hi
+- Rationale: Restarting preview server on port 8080 after server restart notice and confirming everything is running.
+- Updated `CONTEXT.md` (+3/-26 lines).

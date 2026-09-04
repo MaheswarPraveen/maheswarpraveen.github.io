@@ -13,11 +13,10 @@
 }
 
 html {
-  scroll-behavior: smooth;
   background-color: #000000;
   width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 body {
@@ -26,10 +25,31 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   width: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Official Lenis Smooth Scroll CSS Rules */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 /* Background Three.js Canvas */
@@ -81,8 +101,8 @@ body {
 /* Each Slide: Compact height so content center locks at exact 50vh middle-left */
 .card {
   position: relative;
-  min-height: auto;
-  margin-bottom: 20vh; /* Smooth, natural arrival: only ~200px gap after swallow */
+  min-height: 85vh;
+  margin-bottom: 15vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -94,9 +114,10 @@ body {
   transform-style: preserve-3d;
 }
 
-/* Hero Slide: Takes full screen so slide 2 is hidden on load */
+/* Hero Slide: Takes full screen so slide 2 is completely hidden on load */
 .hero-card {
   min-height: 100vh;
+  margin-bottom: 15vh;
   margin-top: 0;
 }
 

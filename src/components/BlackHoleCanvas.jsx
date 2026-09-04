@@ -396,12 +396,10 @@ export default function BlackHoleCanvas() {
       const targetCamX = es.camX + mouseSmooth.x * 1.5;
       const targetCamY = es.camY + mouseSmooth.y * 1.5;
 
-      // Slower catch-up constant (was 5.0) — the camera was snapping to target
-      // almost instantly each frame, which reads as robotic. This gives it a
-      // longer, softer settle without feeling laggy.
-      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-3.0 * dt));
-      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-3.0 * dt));
-      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-3.0 * dt));
+      // Responsive camera tracking tuned for Lenis momentum scroll (eliminates rubber-band lag)
+      camera.position.x += (targetCamX - camera.position.x) * (1.0 - Math.exp(-9.0 * dt));
+      camera.position.y += (targetCamY - camera.position.y) * (1.0 - Math.exp(-9.0 * dt));
+      camera.position.z += (es.camZ - camera.position.z) * (1.0 - Math.exp(-9.0 * dt));
       camera.lookAt(es.lookX, es.lookY, es.lookZ);
 
       // Smooth hover envelope: decays during scroll, recovers organically on pause
@@ -471,7 +469,7 @@ export default function BlackHoleCanvas() {
     // 8. MASTER CAMERA TIMELINE: OBLIQUE 3D PERSPECTIVE (NO FLATTENING)
     // ------------------------------------------------------------------------
     const masterTl = gsap.timeline({
-      scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 1.2 }
+      scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 0.5 }
     });
 
     masterTl.to(es, {
