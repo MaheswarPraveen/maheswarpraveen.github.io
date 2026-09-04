@@ -59,29 +59,21 @@ export default function App() {
           const longSplit = new SplitType(longElements, { types: 'lines' });
           splits.push(longSplit);
 
-          // Wrap each line in an overflow: hidden container for the mask effect
-          longSplit.lines.forEach(line => {
-            const wrapper = document.createElement('div');
-            wrapper.style.overflow = 'hidden';
-            wrapper.style.display = 'block'; // Ensure the wrapper takes up space
-            wrapper.style.verticalAlign = 'top';
-            line.parentNode.insertBefore(wrapper, line);
-            wrapper.appendChild(line);
-          });
-
           // Create a single ScrollTrigger to play the line reveal once
+          // Using clip-path for masking instead of wrapping divs which breaks layout
           gsap.fromTo(longSplit.lines, 
-            { y: '110%', opacity: 0 },
+            { y: 30, opacity: 0, clipPath: 'inset(0 0 100% 0)' },
             {
-              y: '0%',
+              y: 0,
               opacity: 1,
+              clipPath: 'inset(0 0 0% 0)',
               duration: 1.0,
-              stagger: 0.08,
+              stagger: 0.1,
               ease: "power4.out",
               scrollTrigger: {
                 trigger: card,
                 start: "top 85%",
-                toggleActions: "play none none none" // Play once, no scrub
+                toggleActions: "play none none none"
               }
             }
           );
@@ -127,8 +119,8 @@ export default function App() {
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 });
 
-          // Phase 1 (0.0 - 0.45): Organic staggered matrix decode
-          // Phase 2 (0.45 - 1.0): Dynamic flight to BH (even while scrolling!)
+          // Phase 1 (0.0 - 0.15): Organic staggered matrix decode
+          // Phase 2 (0.15 - 1.0): Dynamic flight to BH (even while scrolling!)
 
           const now = performance.now();
 
@@ -144,7 +136,7 @@ export default function App() {
                 c.style.textShadow = 'none';
                 c._swallowState = 0;
               }
-            } else if (p > 0 && p < 0.45) {
+            } else if (p > 0 && p < 0.15) {
               // Staggered, organic flicker
               if (now - c._lastFlip > 40 + (idx % 7) * 15) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
@@ -159,7 +151,7 @@ export default function App() {
               }
             } else {
               // Flight
-              const flightT = (p - 0.45) / 0.55; 
+              const flightT = (p - 0.15) / 0.85; 
               const charFlightStart = (idx / totalChars) * 0.2;
               const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.8));
               const accel = Math.pow(progressInFlight, 2.2);
@@ -201,11 +193,11 @@ export default function App() {
             }
           }
 
-          if (p < 0.45) {
+          if (p < 0.15) {
              boxes.forEach(b => b.style.opacity = '1');
              card.style.opacity = '1';
           } else {
-             const flightT = (p - 0.45) / 0.55;
+             const flightT = (p - 0.15) / 0.85;
              const boxFade = Math.max(0, 1.0 - Math.pow(flightT, 1.5));
              boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
              card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.5)).toFixed(2);
@@ -220,7 +212,7 @@ export default function App() {
         trigger: card,
         // The Hero card is already at top 0 on load. If we use top 80%, it triggers instantly!
         start: isHero ? "top top" : "top 80%", 
-        end: "+=150%", // Scrubs over a much larger scroll distance
+        end: "+=80%", // Scrubs over a reasonable distance so it doesn't stay frozen
         scrub: 1.0,
         animation: tl
       });
