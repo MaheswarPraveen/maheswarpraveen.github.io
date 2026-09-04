@@ -301,3 +301,9 @@ Automated continuity log maintained by offGIT.
 - Directive: dude as soon as i loaded tmy name was absorbed into back hole. also no waves particles. and black hole is too fast
 - Rationale: Diagnosis: 1) Instant Swallow: ScrollTrigger start was set to 'center 55%', which triggers instantly on load because the hero card is already past 55vh. Changed to 'top -50px' so user MUST scroll down 50px to trigger it. 2) Too fast & no waves: Reverted the mathematical ripple wave exact original
 - Updated `CONTEXT.md` (+3/-26 lines).
+
+## 2026-09-04 11:08:32 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: we missed the bveritucal top view the white blank at the end. why is this happening. also veryy laggy and also not slide by slide and black hole not interactive and not even that small at initial pos
+- Rationale: Diagnosis: 1) Top view & white flash: I had removed 'pin: true' shrinking the page height, and the scroll-end div had 0 height so it couldn't be scrolled into. The top-down view was also missing from the timeline. 2) Lag: 'samples: 4' on the custom EffectComposer WebGLRenderTarget was running 4x MSAA, dropping frames heavily. 3) Not slide-by-slide: Removed pinning without providing CSS scroll snapping fallback. 4) Too big: I had accidentally increased the particle radius formula from 1.85 to 2.0. Fix: Added CSS scroll-snap, removed MSAA for performance, restored top-down cam plunge, gave the trigger div 50vh height, and reverted the original smaller BH radii.
+- Updated `CONTEXT.md` (+3/-19 lines).

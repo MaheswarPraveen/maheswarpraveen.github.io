@@ -234,7 +234,7 @@ export default function App() {
           </div>
         </section>
       </main>
-      <div className="scroll-end-trigger" />
+      <div className="scroll-end-trigger" style={{ height: '50vh', width: '100%' }} />
     </>
   );
 }

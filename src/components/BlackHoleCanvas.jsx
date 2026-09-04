@@ -68,10 +68,11 @@ export default function BlackHoleCanvas() {
     // BLOOM POST-PROCESSING
     // ------------------------------------------------------------------------
     renderer.setClearColor(0x000000, 0);
+    // OPTIMIZATION: Removed samples: 4 to massively improve frame rate (fixed lag)
     const renderTarget = new THREE.WebGLRenderTarget(
       window.innerWidth,
       window.innerHeight,
-      { type: THREE.HalfFloatType, format: THREE.RGBAFormat, samples: 4 }
+      { type: THREE.HalfFloatType, format: THREE.RGBAFormat }
     );
     const composer = new EffectComposer(renderer, renderTarget);
     composer.addPass(new RenderPass(scene, camera));
@@ -445,8 +446,18 @@ export default function BlackHoleCanvas() {
       camX: anchorX * 0.5,
       lookX: anchorX * 0.5,
       camZ: 14.0,
-      duration: 0.5,
+      duration: 0.4,
       ease: "power2.inOut"
+    });
+
+    // RESTORED: Final cinematic vertical top-down plunge into the singularity
+    masterTl.to(es, {
+      camY: 28.0,
+      camZ: 0.5, // 0.5 instead of 0 to prevent gimbal lock
+      camX: anchorX,
+      lookX: anchorX,
+      duration: 0.8,
+      ease: "power3.in"
     });
 
     window.__getBHScreenCoord = () => {
