@@ -1,17 +1,15 @@
 # Live Project Context: MaheswarPraveen.github.io
 
-**Last Synced:** 2026-09-04 09:46:31
+**Last Synced:** 2026-09-04 10:02:49
 
 ## Current Focus & Active State
 
-- Directive: its changing to fast to binary you frciking stupid and also i have to scroll to much for next slide to come and fucking also why the fuck its stuck at binary if dont scroll i said it should fucking go away once binary. also fuckin stuckky
-- Rationale: The user's core issue is that the scramble and flight are currently tied to scroll 'scrubbing' - meaning if they stop scrolling, the animation stops, leaving it stuck in binary. Additionally, the scroll track is too long ('end: +=380%'). Fix: Detach the scramble and swallow sequence from 'scrub'. Instead, when the scroll crosses a short threshold (15%), trigger a standalone GSAP timeline that autonomously scrambles (0.5s), locks to zeroes (0.2s), and flies into the black hole (1.1s) without requiring any further scrolling. Reduce pin duration to '+=100%' so the next slide arrives much faster.
-- Updated `CONTEXT.md` (+3/-26 lines).
+- Directive: dude check the scroll time inbetwwen , the stucking while binary goes to black hole , and the way cheaply the letters turn to binary, check yourself, tell me whats happening. then say the solution and we'll fix
+- Rationale: Diagnosis: 1) 'Scroll time inbetween': Pinned sections force the user to scroll through dead space. Removing pin: true will let the layout flow naturally. 2) 'Stucking': The user scrolls faster than the 1.8s animation, causing ScrollTrigger onLeave to instantly snap progress(1), aborting the flight mid-air. 3) 'Cheap binary': Blinking 0s/1s uniformly looks like a cheap marquee. Solution: Remove pin: true. Make the flight much faster (0.8s). Change the binary transition to a fast, staggered matrix-decay rather than a uniform blink.
+- Updated `CONTEXT.md`, `src/App.jsx` (+19/-41 lines).
 
 ## Recent Context Stream
 
-- **[antigravity]** (2026-09-03 22:28:02): are you dumb , i said after everyletter is binary at that moment automated swallowing should start and only come back if scrolled back enough? why are you not even reading propely and now black hole isnt rotating at all wheres ripple. and again you took bakc the interactive interupption of black hole while scrolling. removed independance. why are we even moving forward in time if you are taking back each bug we had one by one? disapointed.
-  *Rationale:* User's exact intent clarified: (1) Scroll controls letter-to-binary transformation line-by-line; at the exact moment all letters become binary, automated swallowing launches autonomously into the blac
 - **[antigravity]** (2026-09-03 22:45:28): wtf is this and wtf is 0aheswar, dude fuck this . just fix neatly . all are very fast the binary tranform. why cant yoiu just fix for gods sake
   *Rationale:* The user hates seeing partial words like '0aheswar' during the scroll-driven scramble, and feels the transition is too fast. Also, a bug in measureCharPositions (reading bounding client rects while tr
 - **[antigravity]** (2026-09-03 23:13:08): check C:\Users\xczma\Desktop\web
@@ -20,6 +18,8 @@
   *Rationale:* Adjusted the scramble progress formula in App.jsx. The English text phase now lasts from p=0.0 to 0.40 (much longer readability). The flickering binary phase is compressed from p=0.40 to 0.55, making 
 - **[antigravity]** (2026-09-04 04:11:48): its changing to fast to binary you frciking stupid and also i have to scroll to much for next slide to come and fucking also why the fuck its stuck at binary if dont scroll i said it should fucking go away once binary. also fuckin stuckky
   *Rationale:* The user's core issue is that the scramble and flight are currently tied to scroll 'scrubbing' - meaning if they stop scrolling, the animation stops, leaving it stuck in binary. Additionally, the scro
+- **[antigravity]** (2026-09-04 04:30:27): dude check the scroll time inbetwwen , the stucking while binary goes to black hole , and the way cheaply the letters turn to binary, check yourself, tell me whats happening. then say the solution and we'll fix
+  *Rationale:* Diagnosis: 1) 'Scroll time inbetween': Pinned sections force the user to scroll through dead space. Removing pin: true will let the layout flow naturally. 2) 'Stucking': The user scrolls faster than t
 
 ## Open Decisions & Next Steps
 

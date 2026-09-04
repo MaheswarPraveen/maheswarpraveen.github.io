@@ -32,18 +32,20 @@ export default function App() {
       const boxes = Array.from(card.querySelectorAll('.tag, .section-title, .clean-link, .stack-col'));
       const totalChars = chars.length;
 
-      // 1. Measure origins ONCE, right now, before any animations or scrolling happen
+      // 1. Measure origins absolutely (including initial scroll)
       const offsets = chars.map((c) => {
         c.dataset.orig = c.textContent;
         c._swallowState = 0;
-        c._lastFlip = 0;
+        c._lastFlip = Math.random() * 100; // stagger initial flip
         const rect = c.getBoundingClientRect();
-        return { x: rect.left, y: rect.top };
+        return { 
+          x: rect.left + window.scrollX, 
+          y: rect.top + window.scrollY 
+        };
       });
 
       // ----------------------------------------------------------------------
-      // CINEMATIC TIMELINE: Detached from scroll-scrubbing.
-      // This plays autonomously once triggered. No more "stuck" letters.
+      // CINEMATIC TIMELINE: Unpinned! Follows natural scroll.
       // ----------------------------------------------------------------------
       const anim = { phase: 0 };
       const tl = gsap.timeline({ paused: true });
@@ -57,17 +59,16 @@ export default function App() {
 
       tl.to(anim, {
         phase: 1.0,
-        duration: 1.8, // Cinematic, deliberate sequence duration (1.8 seconds)
-        ease: "none",
+        duration: 1.4, // Faster, punchier animation
+        ease: "power1.inOut",
         onUpdate: () => {
           const p = anim.phase;
           const bhScreen = capturedBH || (window.__getBHScreenCoord
             ? window.__getBHScreenCoord()
             : { x: window.innerWidth * 0.72, y: window.innerHeight * 0.5 });
 
-          // Phase 1 (0.0 - 0.3): Throttled binary scramble (0.54 seconds)
-          // Phase 2 (0.3 - 0.4): Lock to solid zeroes (0.18 seconds)
-          // Phase 3 (0.4 - 1.0): Flight into black hole (1.08 seconds)
+          // Phase 1 (0.0 - 0.25): Organic staggered matrix decode
+          // Phase 2 (0.25 - 1.0): Dynamic flight to BH (even while scrolling!)
 
           const now = performance.now();
 
@@ -83,111 +84,85 @@ export default function App() {
                 c.style.textShadow = 'none';
                 c._swallowState = 0;
               }
-            } else if (p > 0 && p < 0.3) {
-              // Throttled flicker (retained from LLM fix, approx 10 flips/sec)
-              if (now - c._lastFlip > 90) {
+            } else if (p > 0 && p < 0.25) {
+              // Staggered, organic flicker
+              if (now - c._lastFlip > 40 + (idx % 7) * 15) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
                 c._lastFlip = now;
               }
               if (c._swallowState !== 1) {
-                c.style.color = '#ffb030';
-                c.style.textShadow = '0 0 8px rgba(255, 176, 48, 0.5)';
+                c.style.color = '#ffaa20'; // Bright amber
+                c.style.textShadow = '0 0 12px rgba(255, 170, 32, 0.8)';
                 c.style.opacity = '1';
                 c.style.transform = 'none';
                 c._swallowState = 1;
               }
-            } else if (p >= 0.3 && p < 0.4) {
-              if (c._swallowState !== 2) {
-                c.textContent = '0';
-                c.style.color = '#ffa020';
-                c.style.textShadow = '0 0 10px rgba(255, 160, 32, 0.6)';
-                c.style.opacity = '1';
-                c.style.transform = 'none';
-                c._swallowState = 2;
-              }
             } else {
-              const flightT = (p - 0.4) / 0.6; 
-              const charFlightStart = (idx / totalChars) * 0.25;
-              const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.75));
-              const accel = Math.pow(progressInFlight, 2.0);
+              // Flight
+              const flightT = (p - 0.25) / 0.75; 
+              const charFlightStart = (idx / totalChars) * 0.2;
+              const progressInFlight = Math.max(0, Math.min(1.0, (flightT - charFlightStart) / 0.8));
+              const accel = Math.pow(progressInFlight, 2.2);
 
               const origin = offsets[idx];
-              const dx = bhScreen.x - origin.x;
-              const dy = bhScreen.y - origin.y;
+              // Dynamic vector math! Works seamlessly even if user is scrolling during flight
+              const currentScreenX = origin.x - window.scrollX;
+              const currentScreenY = origin.y - window.scrollY;
+              
+              const dx = bhScreen.x - currentScreenX;
+              const dy = bhScreen.y - currentScreenY;
 
-              const swirlAngle = idx * 0.10 + accel * 3.2;
-              const swirlX = Math.sin(swirlAngle) * 22 * (1 - accel);
-              const swirlY = Math.cos(swirlAngle) * 16 * (1 - accel);
+              const swirlAngle = idx * 0.15 + accel * 4.0;
+              const swirlX = Math.sin(swirlAngle) * 30 * (1 - accel);
+              const swirlY = Math.cos(swirlAngle) * 20 * (1 - accel);
 
               const curX = dx * accel + swirlX;
               const curY = dy * accel + swirlY;
-              const curZ = -accel * 550;
+              const curZ = -accel * 600;
 
-              const scaleX = 1.0 + accel * 0.35;
-              const scaleY = Math.max(0.1, 1.0 - accel * 0.85);
-              const rotX = accel * 52;
-              const rotZ = -accel * 16;
-              const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.2));
+              const scaleX = 1.0 + accel * 0.5;
+              const scaleY = Math.max(0.05, 1.0 - accel * 0.9);
+              const rotX = accel * 60;
+              const rotZ = -accel * 20;
+              const remainingOpacity = Math.max(0, 1.0 - Math.pow(progressInFlight, 2.5));
 
-              if (c.textContent !== '0') c.textContent = '0';
+              // Don't lock to '0', keep it binary stream!
+              if (c._swallowState !== 3) {
+                 c.textContent = Math.random() > 0.5 ? '1' : '0'; // Locks in one random bit for flight
+              }
+              
               c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${curZ.toFixed(0)}px) rotateX(${rotX.toFixed(0)}deg) rotateZ(${rotZ.toFixed(0)}deg) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`;
               
               const shadowStep = Math.round((1 - accel) * 4) / 4;
-              c.style.color = accel < 0.5 ? '#ff9010' : '#dd3000';
-              c.style.textShadow = `0 0 ${Math.max(2, 10 * shadowStep).toFixed(0)}px rgba(255, 120, 20, 0.8)`;
+              c.style.color = accel < 0.6 ? '#ff9010' : '#ff2000'; // Heat up to red
+              c.style.textShadow = `0 0 ${Math.max(2, 15 * shadowStep).toFixed(0)}px rgba(255, 120, 20, 0.9)`;
               c.style.opacity = remainingOpacity.toFixed(2);
               c._swallowState = 3;
             }
           }
 
-          if (p < 0.4) {
+          if (p < 0.25) {
              boxes.forEach(b => b.style.opacity = '1');
              card.style.opacity = '1';
           } else {
-             const flightT = (p - 0.4) / 0.6;
-             const boxFade = Math.max(0, 1.0 - flightT * 1.6);
+             const flightT = (p - 0.25) / 0.75;
+             const boxFade = Math.max(0, 1.0 - Math.pow(flightT, 1.5));
              boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
-             card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.0)).toFixed(2);
+             card.style.opacity = Math.max(0, 1.0 - Math.pow(flightT, 2.5)).toFixed(2);
           }
         }
       });
 
       // ----------------------------------------------------------------------
-      // SCROLLTRIGGER: Trigger the timeline but DO NOT scrub it.
+      // SCROLLTRIGGER: No Pinning! Natural Flow!
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "center center",
-        // Drastically shortened so you don't have to scroll much to reach next slide
-        end: "+=100%", 
-        pin: true,
-        pinSpacing: true,
-        onUpdate: (self) => {
-          const sp = self.progress;
-          
-          // Trigger the autonomous sequence at a 15% scroll threshold
-          if (sp > 0.15) {
-            if (!tl.isActive() && tl.progress() < 1) {
-              tl.play(); // Auto-plays through the whole sequence, doesn't stick
-            }
-          } 
-          // Reverse if user actively scrolls back up to the top
-          else if (sp < 0.10) {
-            if (!tl.isActive() && tl.progress() > 0) {
-              tl.reverse();
-            } else if (tl.isActive() && !tl.reversed()) {
-              tl.reverse();
-            }
-          }
-        },
-        onLeave: () => {
-          tl.progress(1);
-          card.style.opacity = '0';
-        },
-        onLeaveBack: () => {
-          tl.progress(0);
-          card.style.opacity = '1';
-        }
+        start: "center 55%", // Trigger right when it hits center
+        onEnter: () => tl.play(),
+        onEnterBack: () => tl.reverse(),
+        onLeave: () => { /* let it naturally scroll out of view */ },
+        onLeaveBack: () => tl.reverse()
       });
     });
 
