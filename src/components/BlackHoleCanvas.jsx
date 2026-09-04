@@ -154,7 +154,7 @@ export default function BlackHoleCanvas() {
       new THREE.MeshBasicMaterial({ color: 0x000000 })
     );
     singularity.position.copy(blackHolePos);
-    singularity.scale.setScalar(1.4); // Made black spot larger
+    singularity.scale.setScalar(1.6); // Massive black spot
     scene.add(singularity);
 
     const halo = new THREE.Mesh(
@@ -182,13 +182,9 @@ export default function BlackHoleCanvas() {
     scene.add(verticalHalo);
 
     // ------------------------------------------------------------------------
-    // 4. ACCRETION DISK: 24,000 PARTICLES (FLUID ROTATION & ORIGINAL RIPPLE)
+    // PHASE 2: GPU ACCELERATED ACCRETION DISK
     // ------------------------------------------------------------------------
-    // Reduced from 24000 — halves the per-frame CPU trig cost (every particle
-    // does 2 trig calls per frame in JS, on the main thread, every frame).
-    // Combined with bloom doing the visual "density" work, 14000 reads just
-    // as full but stops competing with the scroll/DOM thread for CPU time.
-    const particleCount = 14000;
+    const particleCount = 7000; // Half particles to ensure perfect 60FPS on old devices
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -203,7 +199,8 @@ export default function BlackHoleCanvas() {
 
     for (let i = 0; i < particleCount; i++) {
       const rN = Math.pow(Math.random(), 1.35);
-      const r = 2.31 + rN * 12.5; // Scaled up to match 1.4x singularity
+      // 1.65 * 1.6 scale = 2.64. The disk MUST start precisely at the edge of the singularity
+      const r = 2.64 + rN * 10.0;
       radii[i] = r;
 
       // Even slower Keplerian drift to prevent the "blender" look
