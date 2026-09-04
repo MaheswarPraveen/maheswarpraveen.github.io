@@ -198,13 +198,14 @@ export default function BlackHoleCanvas() {
     const tempColor = new THREE.Color();
 
     for (let i = 0; i < particleCount; i++) {
-      const rN = Math.pow(Math.random(), 1.35);
+      // pow 2.0 packs significantly more particles near the inner edge
+      const rN = Math.pow(Math.random(), 2.0);
       // 1.65 * 1.6 scale = 2.64. The disk MUST start precisely at the edge of the singularity
       const r = 2.64 + rN * 10.0;
       radii[i] = r;
 
-      // Even slower Keplerian drift to prevent the "blender" look
-      speeds[i] = 0.035 / Math.sqrt(r);
+      // User requested outer particles to move FASTER than inner particles
+      speeds[i] = 0.008 + (r - 2.64) * 0.003; 
 
       const a = Math.random() * Math.PI * 2;
       angles[i] = a;
