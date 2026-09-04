@@ -154,15 +154,14 @@ export default function App() {
       });
 
       // ----------------------------------------------------------------------
-      // SCROLLTRIGGER: No Pinning! Natural Flow!
+      // SCROLLTRIGGER: Smooth scrub without pinning to respect CSS Snap!
       // ----------------------------------------------------------------------
       ScrollTrigger.create({
         trigger: card,
-        start: "top -50px", // User must scroll down 50px to trigger it (prevents instant triggering on load)
-        onEnter: () => tl.play(),
-        onEnterBack: () => tl.reverse(),
-        onLeave: () => { /* let it naturally scroll out of view */ },
-        onLeaveBack: () => tl.reverse()
+        start: "top top", 
+        end: "bottom top", // Scrubs perfectly as the card scrolls out of view
+        scrub: 0.5,
+        animation: tl
       });
     });
 

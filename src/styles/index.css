@@ -76,12 +76,19 @@ body {
   scroll-snap-align: center;
 }
 
+/* Each Slide: Take full viewport height to enforce slide-by-slide separation */
+section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  scroll-snap-align: start;
+}
+
 /* Each Slide: Compact height so content center locks at exact 50vh middle-left */
 .card {
   position: relative;
-  width: 100%;
-  min-height: auto;
-  margin-bottom: 20vh; /* Smooth, natural arrival: only ~200px gap after swallow */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
