@@ -522,6 +522,14 @@ export default function BlackHoleCanvas() {
       outerRing.scale.setScalar(1 + Math.cos(t * 1.5) * 0.015);
       verticalHalo.scale.setScalar(1 + Math.sin(t * 1.2) * 0.012);
 
+      // Top-view presence: from above the disk reads thin, so push the photon
+      // rings + bloom hotter as the camera climbs. Keeps the plunge glowing.
+      const topness = Math.min(1, Math.max(0, (es.camY - 4) / 16));
+      halo.material.opacity = 0.75 + topness * 0.25;
+      outerRing.material.opacity = 0.4 + topness * 0.55;
+      verticalHalo.material.opacity = 0.65 + topness * 0.35;
+      bloomPass.strength = 0.85 + topness * 0.6;
+
         // Phase 1: Update Gravitational Lensing target dynamically
         const bhWorld = new THREE.Vector3(anchorX, 0, 0);
         bhWorld.project(camera);

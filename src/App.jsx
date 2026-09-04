@@ -38,6 +38,7 @@ export default function App() {
 
     const splits = [];
     const createdTriggers = [];
+    const cardWatch = []; // { st, flightTl } for the stop-watchdog below
 
     // ------------------------------------------------------------------------
     // 2. WAIT FOR FONTS: Ensure glyph metrics and line boxes are pixel-exact
@@ -135,7 +136,7 @@ export default function App() {
           const now = performance.now();
           for (let idx = 0; idx < totalChars; idx++) {
             const c = chars[idx];
-            if (p < 0.50) {
+            if (p < 0.45) {
               if (c._swallowState !== 0) {
                 c.textContent = c.dataset.orig;
                 c.style.color = '';
@@ -144,7 +145,7 @@ export default function App() {
                 c.style.textShadow = 'none';
                 c._swallowState = 0;
               }
-            } else if (p < 0.75) {
+            } else if (p < 0.68) {
               if (now - c._lastFlip > 90) {
                 c.textContent = Math.random() > 0.5 ? '1' : '0';
                 c._lastFlip = now;
@@ -165,7 +166,7 @@ export default function App() {
               c._swallowState = 2;
             }
           }
-          if (p < 0.75) {
+          if (p < 0.68) {
             boxes.forEach(b => b.style.opacity = '1');
             card.style.opacity = '1';
           }
@@ -196,19 +197,37 @@ export default function App() {
             const ft = flight.t;
             for (let idx = 0; idx < totalChars; idx++) {
               const c = chars[idx];
-              const charFlightStart = (idx / totalChars) * 0.15;
-              const prog = Math.max(0, Math.min(1.0, (ft - charFlightStart) / 0.85));
-              const accel = Math.pow(prog, 2.0);
+              const charFlightStart = (idx / totalChars) * 0.12;
+              const prog = Math.max(0, Math.min(1.0, (ft - charFlightStart) / 0.88));
+              // Ease-in accel: hover, then plunge past the rim (overshoot)
+              const accel = Math.pow(prog, 1.7);
               const origin = offsets[idx];
               const dx = bhScreen.x - (origin.x - window.scrollX);
               const dy = bhScreen.y - (origin.y - window.scrollY);
-              const swirlAngle = idx * 0.12 + accel * 3.0;
-              const curX = dx * accel + Math.sin(swirlAngle) * 18 * (1 - accel);
-              const curY = dy * accel + Math.cos(swirlAngle) * 12 * (1 - accel);
-              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${(-accel * 350).toFixed(0)}px) rotateX(${(accel * 35).toFixed(0)}deg) rotateZ(${(-accel * 12).toFixed(0)}deg) scale(${(1.0 + accel * 0.3).toFixed(2)}, ${Math.max(0.1, 1.0 - accel * 0.8).toFixed(2)})`;
-              c.style.color = accel < 0.6 ? '#ff9010' : '#ff2000';
-              c.style.textShadow = `0 0 ${Math.max(2, 12 * (1 - accel)).toFixed(0)}px rgba(255, 120, 20, 0.9)`;
-              c.style.opacity = Math.max(0, 1.0 - Math.pow(prog, 2.2)).toFixed(2);
+              // Gravitational arc: quadratic bezier toward an overshoot point
+              // 18% past the horizon, bowed perpendicular for a slingshot feel
+              const tx = dx * 1.18, ty = dy * 1.18;
+              const mx = dx * 0.5 - dy * 0.38 + Math.sin(idx * 0.35) * 60 * (1 - accel);
+              const my = dy * 0.5 + dx * 0.38 + Math.cos(idx * 0.27) * 40 * (1 - accel);
+              const ia = 1 - accel;
+              const curX = ia * ia * 0 + 2 * ia * accel * mx + accel * accel * tx;
+              const curY = ia * ia * 0 + 2 * ia * accel * my + accel * accel * ty;
+              // Streak along travel: stretch long, crush thin near contact
+              const streak = 1.0 + accel * 1.8;
+              const crush = Math.max(0.05, 1.0 - Math.pow(prog, 1.5) * 0.95);
+              c.style.transform = `translate3d(${curX.toFixed(1)}px, ${curY.toFixed(1)}px, ${(-accel * 420).toFixed(0)}px) rotateX(${(accel * 45).toFixed(0)}deg) rotateZ(${(-accel * 25).toFixed(0)}deg) scale(${streak.toFixed(2)}, ${crush.toFixed(2)})`;
+              // Heat flare: amber -> white-hot -> ember, crash out past the rim
+              const glow = Math.sin(Math.min(1, prog) * Math.PI);
+              if (prog < 0.55) {
+                c.style.color = '#ffaa20';
+              } else if (prog < 0.85) {
+                c.style.color = '#ffe9b8';
+              } else {
+                c.style.color = '#ff5010';
+              }
+              c.style.textShadow = `0 0 ${(8 + 34 * glow).toFixed(0)}px rgba(255, ${Math.round(170 - 60 * prog)}, 40, 0.95)`;
+              const tailFade = prog < 0.78 ? 1 - Math.pow(prog, 1.4) * 0.25 : Math.max(0, 1 - (prog - 0.78) / 0.22);
+              c.style.opacity = tailFade.toFixed(2);
             }
             const boxFade = Math.max(0, 1.0 - Math.pow(ft, 1.5));
             boxes.forEach(b => b.style.opacity = boxFade.toFixed(2));
@@ -227,22 +246,23 @@ export default function App() {
           end: isHero ? "+=70%" : "+=60%",
           onUpdate: (self) => {
             const p = self.progress;
-            if (p >= 0.80) {
+            if (p >= 0.72) {
               if (flightTl.progress() === 0 && !flightTl.isActive()) flightTl.play();
               return;
             }
-            if (p < 0.62) {
+            if (p < 0.60) {
               if (flightTl.progress() > 0 || flightTl.isActive()) flightTl.reverse();
               else renderScramble(p);
               return;
             }
-            if (!flightTl.isActive()) renderScramble(Math.min(p, 0.79));
+            if (!flightTl.isActive()) renderScramble(Math.min(p, 0.71));
           },
           onLeave: () => { if (flightTl.progress() < 1) flightTl.play(); },
           onLeaveBack: () => { if (flightTl.progress() > 0) flightTl.reverse(); else resetChars(); }
         });
         createdTriggers.push(cardST);
         createdTriggers.push(flightTl);
+        cardWatch.push({ st: cardST, flightTl });
       });
 
       // Terminal Whiteout Flash at the very end of runway
@@ -262,15 +282,44 @@ export default function App() {
             overlay.style.backgroundColor = '#000000';
             overlay.style.opacity = ((self.progress - 0.5) / 0.5).toFixed(2);
           }
+          // Once the blackout passes 85%, hide the WebGL canvas entirely so
+          // no disk pixel can bleed through at the end of scroll.
+          const canvas = document.getElementById('blackhole-canvas');
+          if (canvas) canvas.style.opacity = self.progress > 0.85 ? '0' : '1';
         }
       });
       createdTriggers.push(flashST);
 
+      // Stop-watchdog: fires even with hands off the wheel. Keeps the binary
+      // flicker alive when stopped mid-scramble and auto-launches the flight
+      // when stopped past the lock point, so no state can ever look stuck.
+      const watchdog = setInterval(() => {
+        const now = performance.now();
+        const live = document.querySelectorAll('.char');
+        for (let i = 0; i < live.length; i++) {
+          const c = live[i];
+          if (c._swallowState === 1 && now - c._lastFlip > 110) {
+            c.textContent = Math.random() > 0.5 ? '1' : '0';
+            c._lastFlip = now;
+          }
+        }
+        for (let k = 0; k < cardWatch.length; k++) {
+          const w = cardWatch[k];
+          if (w.st.progress >= 0.72 && w.flightTl.progress() === 0 && !w.flightTl.isActive()) {
+            w.flightTl.play();
+          }
+        }
+      }, 120);
+
       // Recalculate all trigger positions once fonts and elements are rendered
       ScrollTrigger.refresh();
+
+      // Store watchdog for cleanup
+      container._watchdog = watchdog;
     });
 
     return () => {
+      if (container._watchdog) clearInterval(container._watchdog);
       splits.forEach((s) => s.revert());
       createdTriggers.forEach((t) => t.kill());
       gsap.ticker.remove(rafCb);
