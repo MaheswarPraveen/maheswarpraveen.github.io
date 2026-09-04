@@ -325,3 +325,9 @@ Automated continuity log maintained by offGIT.
 - Directive: the verical is only happening at end and in a terrible way, everythibng is still laggyy, the binary only swallowed by black hole at too top and its alggy choopy and not ina smooth way.nothing is smooth. finds most effective and effienicent way to fix it with breaking any current creativity code, also the black spot inside hole is small adf
 - Rationale: Diagnosis: 1) Lag: The CPU was calculating Math.sin/Math.cos and updating BufferAttribute buffers 14,000 times every frame. 2) Swallow timing: Text flying 'too top' because the user was actively scrolling it up while it animated. 3) Small black spot: The MeshBasicMaterial singularity sphere was only 1.65 radius. Fix: EXECUTED PHASE 2. Moved all 14,000 particles to a custom WebGL ShaderMaterial. CPU loop is completely gone (O(1) uniform updates), fixing all lag. Scaled the singularity meshes by 1.4x to make the black spot significantly larger. Sped up the text swallow animation to 0.8s so it happens rapidly before the scroll can drag it out of frame.
 - Applied workspace modifications (+0/-13 lines).
+
+## 2026-09-04 15:11:21 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: no dont scale up glowing ring , only scale up black singularity., also it should be fully optimized to work smoothl6
+- Rationale: Diagnosis: 1) Glowing rings were scaled with the black spot. Reverted scale on halo/outerRing meshes. 2) User reported lag despite GPU particles. The UnrealBloomPass and 1.5x pixel ratio were causing massive GPU fill-rate overhead on high-DPI displays. Fix: Capped renderer pixel ratio to 1.0 (eliminates 4x pixel overhead on Retina/4K) and downscaled the UnrealBloomPass internal resolution vector by 50% (preserves the soft glow but computes 4x faster).
+- Updated `CONTEXT.md` (+3/-17 lines).
