@@ -459,3 +459,9 @@ Automated continuity log maintained by offGIT.
 - Directive: or maybe it runs on github server?
 - Rationale: Explain client-side vs server-side execution: GitHub Pages is a static CDN that only serves files; 100% of WebGL, Three.js, GSAP, and React code executes locally on the client machine's CPU and GPU.
 - Updated `CONTEXT.md` (+3/-3 lines).
+
+## 2026-09-05 12:12:21 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: EWWW WHY ITS GOING INTO THE MIDDLE OF BLACK HOLE, SHOULD GO JOIN PARTICLES WAVES , ALSO LOOKS CHEAP CHEAP CHEAP FAST NOT FLOW CINEMATIC. FAILURE
+- Rationale: Completely redesign text disintegration: text does not shoot into the center singularity. Instead, letters dissolve into fine glowing ember particles that tangentially merge into the Keplerian accretion disk swirl and join the particle waves with smooth, majestic cinematic flow.
+- Updated `CONTEXT.md` (+3/-17 lines).
