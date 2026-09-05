@@ -453,3 +453,9 @@ Automated continuity log maintained by offGIT.
 - Directive: hi
 - Rationale: Restarting preview server on port 8080 after server restart notice and confirming everything is running.
 - Applied workspace modifications (+0/-9 lines).
+
+## 2026-09-05 09:49:19 - Manual edit (Arduino IDE / Thonny / Godot)
+
+- Directive: or maybe it runs on github server?
+- Rationale: Explain client-side vs server-side execution: GitHub Pages is a static CDN that only serves files; 100% of WebGL, Three.js, GSAP, and React code executes locally on the client machine's CPU and GPU.
+- Updated `CONTEXT.md` (+3/-3 lines).
