@@ -71,8 +71,12 @@ export default function BlackHoleCanvas() {
     const camera = new THREE.PerspectiveCamera(fitFov(), window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, stencil: false, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // OPTIMIZATION: Cap Pixel Ratio to 1.0 (Retina 2.0+ displays cause 4x pixel overhead)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
+    // OPTIMIZATION: Cap Pixel Ratio (Retina 2.0+ = 4x pixel overhead).
+    // Mobile renders at 0.85: phones upscale cheaply, fullscreen bloom is
+    // where their GPUs die. Desktop unchanged at 1.0.
+    const mobilePR = window.innerWidth < 768 ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    renderer.setPixelRatio(mobilePR ? Math.min(window.devicePixelRatio, 0.85) : Math.min(window.devicePixelRatio, 1.0));
 
     // Phase 1: ACES Filmic Tone Mapping
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -93,10 +97,12 @@ export default function BlackHoleCanvas() {
     
     // OPTIMIZATION: Downsample the Bloom pass by feeding it half the screen resolution.
     // It creates the same soft glow but processes 4x fewer pixels internally.
+    // Mobile feeds quarter res (16x fewer): same glow, fraction of the cost.
+    const bloomDiv = mobilePR ? 4 : 2;
     // Tight bloom: hot core glow only. Wide radius was blowing a giant
     // brown dome around the hole — the "distortion sphere" look.
     const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2),
+      new THREE.Vector2(window.innerWidth / bloomDiv, window.innerHeight / bloomDiv),
       0.7,   // strength
       0.35,  // radius
       0.15   // threshold

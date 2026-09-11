@@ -30,14 +30,15 @@ export default function App() {
 
     lenis.on('scroll', ScrollTrigger.update);
 
-    // Velocity skew: the whole text deck leans with scroll speed (fast flick
-    // = visible lean, rest = straight). Compositor-only transform on the
-    // container, eased back every frame — the classic "motion while
-    // scrolling" feel. Clamped subtle so it never reads seasick.
-    const skewSetter = gsap.quickTo('#ui-container', 'skewY', { duration: 0.4, ease: 'power3' });
-    lenis.on('scroll', ({ velocity }) => {
-      skewSetter(gsap.utils.clamp(-6, 6, (velocity || 0) / -30));
-    });
+    // Velocity skew (fine-pointer only): the whole text deck leans with
+    // scroll speed. Phones skip it — re-skewing 2000+ glyph spans every
+    // touch frame is exactly the kind of repaint storm that reads as lag.
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+      const skewSetter = gsap.quickTo('#ui-container', 'skewY', { duration: 0.4, ease: 'power3' });
+      lenis.on('scroll', ({ velocity }) => {
+        skewSetter(gsap.utils.clamp(-6, 6, (velocity || 0) / -30));
+      });
+    }
 
     // Magnetic slide settling: stopping anywhere glides to the nearest
     // slide — or the solar finale past the runway midpoint — so scroll can
@@ -490,7 +491,19 @@ export default function App() {
       // back up always restores. No state can ever look stuck.
       // Stop-watchdog: monitors card states and guarantees that when a user
       // stops scrolling or scrolls backward, text NEVER stays stuck in binary or tilted.
+      // Fast scroll: skip the full-DOM shimmer sweep mid-fling, tracked
+      // from scroll deltas between ticks (closure vars — interval IDs are
+      // numbers and can't hold properties).
+      let wdLastY = window.scrollY;
+      let wdLastT = performance.now();
       const watchdog = setInterval(() => {
+        if (document.hidden) return;
+        const wy = window.scrollY;
+        const wt = performance.now();
+        const wv = Math.abs(wy - wdLastY) / Math.max(1, wt - wdLastT) * 16.7;
+        wdLastY = wy;
+        wdLastT = wt;
+        if (wv > 8) return;
         // Flicker upkeep only: no timelines exist, so there is nothing to
         // launch, reverse, or strand. Binary chars shimmer while visible.
         const now = performance.now();
