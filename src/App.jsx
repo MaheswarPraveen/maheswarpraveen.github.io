@@ -25,10 +25,19 @@ export default function App() {
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.6,
+      touchMultiplier: (window.innerWidth < 768) ? 1.2 : 1.6,
     });
 
     lenis.on('scroll', ScrollTrigger.update);
+
+    // Velocity skew: the whole text deck leans with scroll speed (fast flick
+    // = visible lean, rest = straight). Compositor-only transform on the
+    // container, eased back every frame — the classic "motion while
+    // scrolling" feel. Clamped subtle so it never reads seasick.
+    const skewSetter = gsap.quickTo('#ui-container', 'skewY', { duration: 0.4, ease: 'power3' });
+    lenis.on('scroll', ({ velocity }) => {
+      skewSetter(gsap.utils.clamp(-6, 6, (velocity || 0) / -30));
+    });
 
     // Magnetic slide settling: stopping anywhere glides to the nearest
     // slide — or the solar finale past the runway midpoint — so scroll can
@@ -55,7 +64,7 @@ export default function App() {
         const cardAnchors = currentCards.map((c) =>
           Math.max(0, Math.min(max, c.offsetTop - (vh - c.offsetHeight) / 2))
         );
-        const inFinale = y > max - vh * 2.6;
+        const inFinale = y > max - vh * 1.5;
         const pool = inFinale ? [cardAnchors[cardAnchors.length - 1], max] : cardAnchors;
         let best = pool[0];
         let bd = 1e9;
@@ -117,20 +126,24 @@ export default function App() {
             const longSplit = new SplitType(longElements, { types: 'lines, words, chars' });
             splits.push(longSplit);
 
-            // Clean masked line reveal: triggers as card enters
-            const lineTween = gsap.fromTo(longSplit.lines, 
+            // Clean masked line reveal: SCRUBBED to scroll position (not a
+            // timed tween). Timed reveals complete off-screen on fast scrolls
+            // and you never see them — scrubbed, the reveal state always
+            // matches where the card is: fast scroll = quick reveal, slow =
+            // slow, and rewinding un-reveals mirror-perfectly.
+            const lineTween = gsap.fromTo(longSplit.lines,
               { y: 70, opacity: 0, clipPath: 'inset(0 0 100% 0)' },
               {
                 y: 0,
                 opacity: 1,
                 clipPath: 'inset(0 0 0% 0)',
-                duration: 1.3,
+                ease: 'none',
                 stagger: 0.14,
-                ease: "power3.out",
                 scrollTrigger: {
                   trigger: card,
-                  start: "top 85%",
-                  toggleActions: "play none none none"
+                  start: 'top 85%',
+                  end: 'top 45%',
+                  scrub: true
                 }
               }
             );
@@ -513,6 +526,7 @@ export default function App() {
     return () => {
       if (settleTimer) clearTimeout(settleTimer);
       if (container._watchdog) clearInterval(container._watchdog);
+      gsap.killTweensOf('#ui-container');
       splits.forEach((s) => s.revert());
       createdTriggers.forEach((t) => t.kill());
       gsap.ticker.remove(rafCb);
@@ -565,7 +579,7 @@ export default function App() {
           </div>
         </section>
       </main>
-      <div className="scroll-end-trigger" style={{ height: '260vh', width: '100%' }} />
+      <div className="scroll-end-trigger" style={{ height: '150vh', width: '100%' }} />
     </>
   );
 }

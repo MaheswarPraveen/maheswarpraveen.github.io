@@ -107,7 +107,7 @@ html.lenis, html.lenis body {
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
-  margin-bottom: 22vh;
+  margin-bottom: 10vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -122,7 +122,7 @@ html.lenis, html.lenis body {
 /* Hero Slide: Takes full screen so slide 2 is completely hidden on load */
 .hero-card {
   min-height: 100vh;
-  margin-bottom: 22vh;
+  margin-bottom: 10vh;
   margin-top: 0;
 }
 
@@ -367,4 +367,18 @@ html.lenis, html.lenis body {
   .section-title { font-size: 1.7rem; }
   .section-desc { font-size: 1.05rem; line-height: 1.65; }
   .tag { font-size: 0.8rem; padding: 5px 12px; }
+  /* Mobile stage direction: quieter canvas so text always wins, stronger
+     halos over the disk, furniture tucked out of the text column. */
+  #blackhole-canvas { opacity: 0.65; }
+  .section-title { text-shadow: 0 2px 14px rgba(0, 0, 0, 1), 0 0 28px rgba(0, 0, 0, 0.9); }
+  .section-desc { text-shadow: 0 1px 10px rgba(0, 0, 0, 1), 0 0 22px rgba(0, 0, 0, 0.9); }
+  .name-title { text-shadow: 0 2px 16px rgba(0, 0, 0, 1), 0 0 32px rgba(0, 0, 0, 0.9); }
+  #deck-counter {
+    left: auto;
+    right: clamp(20px, 5vw, 28px);
+    bottom: 20px;
+    font-size: 0.72rem;
+  }
+  .tag-cloud { gap: 6px; }
+  .hero-links { gap: 20px; flex-wrap: wrap; }
 }

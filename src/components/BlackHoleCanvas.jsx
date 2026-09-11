@@ -55,7 +55,20 @@ export default function BlackHoleCanvas() {
     const blackHolePos = new THREE.Vector3(anchorX, 0, 0);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // Mobile portrait fit + GPU diet: narrow screens get a wider lens so
+    // the hole stays framed, and fewer particles so phone GPUs keep up.
+    // Desktop (16:9, fine pointer) is pixel-identical to before.
+    const isMobileGPU =
+      window.innerWidth < 768 ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    const fitFov = () => {
+      const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+      if (aspect < 0.7) return 70;
+      if (aspect < 1.0) return 58;
+      return 45;
+    };
+
+    const camera = new THREE.PerspectiveCamera(fitFov(), window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, stencil: false, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     // OPTIMIZATION: Cap Pixel Ratio to 1.0 (Retina 2.0+ displays cause 4x pixel overhead)
@@ -101,6 +114,7 @@ export default function BlackHoleCanvas() {
         tDiffuse: { value: null },
         bhPos: { value: new THREE.Vector2(0.5, 0.5) },
         uLensFade: { value: 1.0 }, // Finale: lens becomes a passthrough so the sun isn't eclipsed
+        uAspect: { value: window.innerWidth / Math.max(1, window.innerHeight) }, // live aspect: a hardcoded 16:9 turns the void into a pillar on portrait phones
         strength: { value: 0.00018 } // Gentle warp: dome present but smaller and airy
       },
       vertexShader: `
@@ -115,12 +129,13 @@ export default function BlackHoleCanvas() {
         uniform vec2 bhPos;
         uniform float strength;
         uniform float uLensFade;
+        uniform float uAspect;
         varying vec2 vUv;
 
         void main() {
           vec2 dir = vUv - bhPos;
-          // Compensate for aspect ratio roughly if needed, assuming 16:9 for distance
-          dir.x *= 1.77; 
+          // Live aspect compensation: the void stays a disc on any screen.
+          dir.x *= uAspect;
           float dist = length(dir);
           vec2 warpedUv = vUv;
           
@@ -136,9 +151,8 @@ export default function BlackHoleCanvas() {
           float edgeFade = smoothstep(0.15, 0.055, dist);
           warp *= edgeFade;
 
-          // Warp towards the black hole
-          vec2 trueDir = vUv - bhPos;
-          warpedUv -= normalize(trueDir + vec2(1e-5)) * warp * uLensFade;
+          // Warp towards the black hole along the aspect-corrected direction
+          warpedUv -= (dir / max(dist, 1e-5)) * warp * uLensFade;
 
           vec4 warped = texture2D(tDiffuse, warpedUv);
           // Soft-edged void: covers bloom bleed; feathered wider so the very
@@ -171,7 +185,7 @@ export default function BlackHoleCanvas() {
     // ------------------------------------------------------------------------
     // PHASE 2: GPU ACCELERATED ACCRETION DISK
     // ------------------------------------------------------------------------
-    const particleCount = 18000; // Dense disk; single draw call, GPU-side math
+    const particleCount = isMobileGPU ? 5000 : 18000; // Dense disk; single draw call, GPU-side math
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -328,7 +342,7 @@ export default function BlackHoleCanvas() {
     // Fills the empty field between the text column and the BH. Fully GPU
     // driven (O(1) CPU): each particle loops spawn -> horizon via uTime.
     // ------------------------------------------------------------------------
-    const infallCount = 2000;
+    const infallCount = isMobileGPU ? 600 : 2000;
     const infallGeo = new THREE.BufferGeometry();
     const infallSpawn = new Float32Array(infallCount * 3);
     const infallSeed = new Float32Array(infallCount);
@@ -874,7 +888,7 @@ export default function BlackHoleCanvas() {
     }
 
     // Finale starfield: static shell, zero per-frame cost.
-    const starCount = 1500;
+    const starCount = isMobileGPU ? 500 : 1500;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
     const starCol = new Float32Array(starCount * 3);
@@ -977,9 +991,13 @@ export default function BlackHoleCanvas() {
 
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
+      camera.fov = fitFov();
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       composer.setSize(window.innerWidth, window.innerHeight);
+      if (lensingPass && lensingPass.uniforms && lensingPass.uniforms.uAspect) {
+        lensingPass.uniforms.uAspect.value = window.innerWidth / Math.max(1, window.innerHeight);
+      }
     };
 
     window.addEventListener('mousemove', onMouseMove);
@@ -1180,7 +1198,7 @@ export default function BlackHoleCanvas() {
       scrollTrigger: {
         trigger: document.body,
         start: "top top",
-        end: () => (document.documentElement.scrollHeight - window.innerHeight - window.innerHeight * 2.6),
+        end: () => (document.documentElement.scrollHeight - window.innerHeight - window.innerHeight * 1.5),
         scrub: 0.5,
         invalidateOnRefresh: true
       }
