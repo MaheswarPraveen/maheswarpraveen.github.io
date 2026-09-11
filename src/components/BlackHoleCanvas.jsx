@@ -78,10 +78,9 @@ export default function BlackHoleCanvas() {
       (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     renderer.setPixelRatio(mobilePR ? Math.min(window.devicePixelRatio, 0.85) : Math.min(window.devicePixelRatio, 1.0));
 
-    // Phase 1: ACES Filmic Tone Mapping (mobile runs a touch hotter to make
-    // up for the missing bloom halo).
+    // Phase 1: ACES Filmic Tone Mapping
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = mobilePR ? 1.35 : 1.2;
+    renderer.toneMappingExposure = 1.2;
 
     // ------------------------------------------------------------------------
     // BLOOM POST-PROCESSING
@@ -99,18 +98,16 @@ export default function BlackHoleCanvas() {
     // OPTIMIZATION: Downsample the Bloom pass by feeding it half the screen resolution.
     // It creates the same soft glow but processes 4x fewer pixels internally.
     // Mobile feeds quarter res (16x fewer): same glow, fraction of the cost.
-    // Weakest phones skip bloom entirely (null pass): the disk still burns
-    // via its own shader brightness, minus the halo. Desktop untouched.
     const bloomDiv = mobilePR ? 4 : 2;
     // Tight bloom: hot core glow only. Wide radius was blowing a giant
     // brown dome around the hole — the "distortion sphere" look.
-    const bloomPass = mobilePR ? null : new UnrealBloomPass(
+    const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth / bloomDiv, window.innerHeight / bloomDiv),
       0.7,   // strength
       0.35,  // radius
       0.15   // threshold
     );
-    if (bloomPass) composer.addPass(bloomPass);
+    composer.addPass(bloomPass);
 
     // Phase 1: Depth of Field (BokehPass)
     // Disabled temporarily: BokehPass requires precise per-frame 'focus' uniform updates 
@@ -194,7 +191,7 @@ export default function BlackHoleCanvas() {
     // ------------------------------------------------------------------------
     // PHASE 2: GPU ACCELERATED ACCRETION DISK
     // ------------------------------------------------------------------------
-    const particleCount = isMobileGPU ? 2500 : 18000; // Dense disk; single draw call, GPU-side math
+    const particleCount = isMobileGPU ? 5000 : 18000; // Dense disk; single draw call, GPU-side math
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -351,7 +348,7 @@ export default function BlackHoleCanvas() {
     // Fills the empty field between the text column and the BH. Fully GPU
     // driven (O(1) CPU): each particle loops spawn -> horizon via uTime.
     // ------------------------------------------------------------------------
-    const infallCount = isMobileGPU ? 300 : 2000;
+    const infallCount = isMobileGPU ? 600 : 2000;
     const infallGeo = new THREE.BufferGeometry();
     const infallSpawn = new Float32Array(infallCount * 3);
     const infallSeed = new Float32Array(infallCount);
@@ -1100,7 +1097,7 @@ export default function BlackHoleCanvas() {
       // orange circle ever draws over the top-down view.
       // topness computed above with the uniforms.
       // No geometry rings to fade — bloom + particle ignition carry the top view.
-      if (bloomPass) bloomPass.strength = 0.55 + topness * 0.35;
+      bloomPass.strength = 0.55 + topness * 0.35;
 
       // Solar system life: independent orbits + hover highlight. Guarded by
       // visibility, so mid-page frames pay nothing for the finale.
