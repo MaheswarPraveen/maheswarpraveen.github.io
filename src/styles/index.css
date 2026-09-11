@@ -354,8 +354,8 @@ html.lenis, html.lenis body {
     width: 100%;
     max-width: 100%;
     margin-left: 0;
-    padding-left: clamp(20px, 5vw, 28px);
-    padding-right: clamp(20px, 5vw, 28px);
+    padding-left: max(clamp(20px, 5vw, 28px), env(safe-area-inset-left));
+    padding-right: max(clamp(20px, 5vw, 28px), env(safe-area-inset-right));
     perspective-origin: 50% 50%;
   }
   .card {
@@ -380,4 +380,33 @@ html.lenis, html.lenis body {
   }
   .tag-cloud { gap: 6px; }
   .hero-links { gap: 20px; flex-wrap: wrap; }
+  /* Mobile design pass: safe-area notches, top-third staging (no dead void
+     above content on tall phones), 44px tap targets, no tap flash. */
+  #ui-container {
+    padding-top: max(clamp(20px, 5vw, 28px), env(safe-area-inset-top));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .card {
+    justify-content: flex-start;
+    padding-top: 16vh;
+  }
+  .clean-link {
+    display: inline-block;
+    min-height: 44px;
+    line-height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  a, button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Reduced motion: content simply reads. Battery + accessibility win. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
