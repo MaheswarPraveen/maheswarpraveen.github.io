@@ -127,17 +127,16 @@ export default function App() {
             const longSplit = new SplitType(longElements, { types: 'lines, words, chars' });
             splits.push(longSplit);
 
-            // Clean masked line reveal: SCRUBBED to scroll position (not a
-            // timed tween). Timed reveals complete off-screen on fast scrolls
-            // and you never see them — scrubbed, the reveal state always
-            // matches where the card is: fast scroll = quick reveal, slow =
-            // slow, and rewinding un-reveals mirror-perfectly.
+            // Line reveal: y + opacity only, scrubbed to scroll (both
+            // compositor-accelerated). Clip-path was the handoff jank: it
+            // repaints the whole text block per frame, landing on top of the
+            // exiting slide's char writes + camera + settle in the same
+            // frames. Scrubbed timing is kept so fast scrolls still reveal.
             const lineTween = gsap.fromTo(longSplit.lines,
-              { y: 70, opacity: 0, clipPath: 'inset(0 0 100% 0)' },
+              { y: 70, opacity: 0 },
               {
                 y: 0,
                 opacity: 1,
-                clipPath: 'inset(0 0 0% 0)',
                 ease: 'none',
                 stagger: 0.14,
                 scrollTrigger: {
